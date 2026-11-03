@@ -6,10 +6,23 @@ from PySide6.QtGui import QColor, QImage, QPainter
 from .sources import Source
 
 
-def compose(sources: list[Source], width: int, height: int) -> QImage:
+def compose(
+    sources: list[Source],
+    width: int,
+    height: int,
+    target: QImage | None = None,
+) -> QImage:
     width = max(16, int(width))
     height = max(16, int(height))
-    image = QImage(width, height, QImage.Format_RGB32)
+    if (
+        target is None
+        or target.width() != width
+        or target.height() != height
+        or target.format() != QImage.Format.Format_RGB32
+    ):
+        image = QImage(width, height, QImage.Format.Format_RGB32)
+    else:
+        image = target
     image.fill(QColor(4, 6, 9))
     painter = QPainter(image)
     painter.setRenderHints(

@@ -13,6 +13,7 @@ from PySide6.QtGui import (
     QColor,
     QDesktopServices,
     QGuiApplication,
+    QImage,
     QKeySequence,
     QShortcut,
 )
@@ -49,7 +50,11 @@ from .composer import compose
 from .config import Config, save_state
 from .dialogs import AboutDialog, SettingsDialog, WindowPickerDialog
 from .recorder import RecordingSession, pcm_level, pick_audio_format
-from .screencapture import shutdown_screen_pumps
+from .screencapture import (
+    set_capture_fps,
+    set_capture_target_size,
+    shutdown_screen_pumps,
+)
 from .sources import (
     CameraSource,
     ImageSource,
@@ -126,6 +131,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
         self.config = config
+        set_capture_target_size(config.output_width, config.output_height)
+        set_capture_fps(30)
         self.setWindowTitle("Klip")
         self.setWindowIcon(icons.app_icon())
         self.setMinimumSize(1120, 680)
@@ -138,6 +145,7 @@ class MainWindow(QMainWindow):
         self.record_path = ""
         self._frames_sent = 0
         self._record_error: str | None = None
+        self._record_buffer: QImage | None = None
         self._titlebar_applied = False
         self._text_editor: QPlainTextEdit | None = None
         self._audio_devices = []
@@ -211,6 +219,14 @@ class MainWindow(QMainWindow):
 
     def output_size(self) -> tuple[int, int]:
         return self.config.output_width, self.config.output_height
+
+    def _sync_capture_target(self) -> None:
+        set_capture_target_size(self.config.output_width, self.config.output_height)
+
+    def _update_capture_activity(self) -> None:
+        if self.is_recording:
+            return
+        set_capture_fps(1 if self.isMinimized() else 30)
 
     @staticmethod
     def _fit_source(source: Source, aspect_width: int, aspect_height: int, canvas_width: int, canvas_height: int) -> None:
@@ -337,6 +353,9 @@ class MainWindow(QMainWindow):
         super().changeEvent(event)
         if event.type() == QEvent.Type.WindowStateChange:
             self._sync_window_buttons()
+            self._update_capture_activity()
+            if not self.isMinimized():
+                self.preview.refresh()
 
     def _physical_rect(self, widget: QWidget) -> QRect:
         dpr = widget.devicePixelRatioF() or 1.0
@@ -948,6 +967,7 @@ class MainWindow(QMainWindow):
             self._titlebar_applied = True
             QTimer.singleShot(0, lambda: apply_native_titlebar(self))
             QTimer.singleShot(0, self._start_cameras_for_current_scene)
+        self._update_capture_activity()
 
     def closeEvent(self, event) -> None:
         if self.is_recording:
@@ -1046,6 +1066,9 @@ class MainWindow(QMainWindow):
         if reply != QMessageBox.StandardButton.Yes:
             return
         scene.stop_cameras()
+        for source in scene.sources:
+            if isinstance(source, WindowSource):
+                source.stop()
         index = self.current_scene_index
         self.scenes.pop(index)
         self.selected_source_id = None
@@ -1072,6 +1095,9 @@ class MainWindow(QMainWindow):
         if not 0 <= index < len(self.scenes) or index == self.current_scene_index:
             return
         self.current_scene().stop_cameras()
+        for source in self.current_scene().sources:
+            if isinstance(source, WindowSource):
+                source.stop()
         self.current_scene_index = index
         self.selected_source_id = None
         self.current_scene().start_cameras()
@@ -1207,6 +1233,11 @@ class MainWindow(QMainWindow):
         if isinstance(source, CameraSource):
             if source.visible:
                 source.start()
+            else:
+                source.stop()
+        elif isinstance(source, WindowSource):
+            if source.visible:
+                source.refresh()
             else:
                 source.stop()
         self.source_list.refresh_visibility()
@@ -1836,6 +1867,8 @@ class MainWindow(QMainWindow):
                 if answer == QMessageBox.StandardButton.Yes:
                     set_microphone_muted(False)
         self._stop_mic_monitor()
+        self._sync_capture_target()
+        set_capture_fps(self.config.fps)
         try:
             session = RecordingSession(
                 str(path),
@@ -1887,7 +1920,8 @@ class MainWindow(QMainWindow):
         for source in sources:
             if source.visible and source.kind in {"screen", "window"}:
                 source.refresh()
-        frame = compose(sources, *self.output_size())
+        frame = compose(sources, *self.output_size(), self._record_buffer)
+        self._record_buffer = frame
         expected = int(elapsed * self.config.fps) + 1
         repeat = expected - self._frames_sent
         if repeat > 0:
@@ -1930,6 +1964,7 @@ class MainWindow(QMainWindow):
                 stop_error = str(exc)
         self.preview.set_recording(False)
         self.preview.refresh()
+        self._update_capture_activity()
         self.record_btn.setChecked(False)
         self.record_btn.setText("Start recording")
         self.record_btn.setIcon(icons.tool_icon("record", 16, RED))
@@ -1973,6 +2008,7 @@ class MainWindow(QMainWindow):
             return
         for key, value in dialog.values.items():
             setattr(self.config, key, value)
+        self._sync_capture_target()
         self._sync_header()
         self.preview.refresh()
         self._schedule_save()

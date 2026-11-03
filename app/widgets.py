@@ -361,6 +361,7 @@ class PreviewWidget(QWidget):
         self._source_provider = source_provider
         self._output_size_provider = output_size_provider
         self._frame: QImage | None = None
+        self._buffer: QImage | None = None
         self._selected_id: str | None = None
         self._recording = False
         self._drag: dict | None = None
@@ -403,7 +404,8 @@ class PreviewWidget(QWidget):
             if source.visible and source.kind in {"screen", "window"}:
                 source.refresh()
         width, height = self._output_size_provider()
-        self._frame = compose(sources, width, height)
+        self._frame = compose(sources, width, height, self._buffer)
+        self._buffer = self._frame
         self.update()
 
     def canvas_rect(self) -> QRectF:

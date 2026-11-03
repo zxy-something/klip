@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 import uuid
 
@@ -15,7 +16,12 @@ from PySide6.QtGui import (
     QPen,
     QPixmap,
 )
-from PySide6.QtMultimedia import QCamera, QMediaDevices, QVideoSink
+from PySide6.QtMultimedia import (
+    QCamera,
+    QMediaCaptureSession,
+    QMediaDevices,
+    QVideoSink,
+)
 
 from .screencapture import release_window_pump, screen_pump, window_pump
 from .win32util import (
@@ -254,7 +260,7 @@ class ScreenSource(Source):
                                 rect,
                                 rel_x,
                                 rel_y,
-                                rect.width() / max(1, self._image.width()),
+                                rect.width() / max(1.0, float(width)),
                             )
         else:
             draw_placeholder(painter, rect, "Screen unavailable")
@@ -381,7 +387,7 @@ class WindowSource(Source):
                                 rect,
                                 rel_x,
                                 rel_y,
-                                rect.width() / max(1, self._image.width()),
+                                rect.width() / max(1.0, float(width)),
                             )
         else:
             draw_placeholder(painter, rect, "Window unavailable")
@@ -397,9 +403,11 @@ class CameraSource(Source):
         self.mirror = True
         self.shape = "rounded"
         self._camera: QCamera | None = None
+        self._session: QMediaCaptureSession | None = None
         self._sink: QVideoSink | None = None
         self._image: QImage | None = None
         self._state = "idle"
+        self.frames_received = 0
 
     def data_dict(self) -> dict:
         return {
@@ -433,12 +441,17 @@ class CameraSource(Source):
             self._state = "missing"
             return
         self._state = "starting"
-        self._sink = QVideoSink()
-        self._sink.videoFrameChanged.connect(self._on_frame)
-        self._camera = QCamera(device)
-        self._camera.setVideoSink(self._sink)
-        self._camera.errorOccurred.connect(self._on_error)
-        self._camera.start()
+        sink = QVideoSink()
+        sink.videoFrameChanged.connect(self._on_frame)
+        camera = QCamera(device)
+        session = QMediaCaptureSession()
+        session.setCamera(camera)
+        session.setVideoSink(sink)
+        camera.errorOccurred.connect(self._on_error)
+        self._sink = sink
+        self._session = session
+        self._camera = camera
+        camera.start()
 
     def _on_frame(self, frame) -> None:
         try:
@@ -448,6 +461,7 @@ class CameraSource(Source):
             if image.isNull():
                 return
             self._image = image
+            self.frames_received += 1
             self._state = "live"
         except Exception:
             self._state = "error"
@@ -456,9 +470,15 @@ class CameraSource(Source):
         self._state = "error"
 
     def stop(self) -> None:
-        camera, sink = self._camera, self._sink
+        camera, session, sink = self._camera, self._session, self._sink
         self._camera = None
+        self._session = None
         self._sink = None
+        if session is not None:
+            try:
+                session.setVideoSink(None)
+            except Exception:
+                pass
         if camera is not None:
             try:
                 camera.stop()
@@ -467,6 +487,8 @@ class CameraSource(Source):
             camera.deleteLater()
         if sink is not None:
             sink.deleteLater()
+        if session is not None:
+            session.deleteLater()
         self._image = None
         self._state = "idle"
 
@@ -603,6 +625,9 @@ class TextSource(Source):
         self.bold = bold
         self.align = align if align in {"left", "center", "right"} else "center"
         self.background = background
+        self._cache_key: tuple | None = None
+        self._cache_image: QImage | None = None
+        self._cache_origin = (0.0, 0.0)
 
     def data_dict(self) -> dict:
         return {
@@ -633,29 +658,76 @@ class TextSource(Source):
         if not self.text.strip():
             draw_placeholder(painter, rect, "Empty text")
             return
-        pixel_size = max(8, int(canvas.height() * self.size))
+        width = max(1, int(round(rect.width())))
+        height = max(1, int(round(rect.height())))
+        key = (
+            self.text,
+            self.size,
+            self.color,
+            self.bold,
+            self.align,
+            self.background,
+            width,
+            height,
+            canvas.height(),
+        )
+        if key != self._cache_key or self._cache_image is None:
+            self._cache_image = self._render_cache(width, height, canvas.height())
+            self._cache_key = key
+        origin_x, origin_y = self._cache_origin
+        painter.drawImage(
+            QRectF(
+                rect.x() - origin_x,
+                rect.y() - origin_y,
+                self._cache_image.width(),
+                self._cache_image.height(),
+            ),
+            self._cache_image,
+        )
+
+    def _render_cache(self, width: int, height: int, canvas_height: int) -> QImage:
+        pixel_size = max(8, int(canvas_height * self.size))
         font = QFont("Segoe UI")
         font.setPixelSize(pixel_size)
         font.setWeight(QFont.Bold if self.bold else QFont.Normal)
-        painter.setFont(font)
 
-        align = {
-            "left": Qt.AlignLeft,
-            "center": Qt.AlignHCenter,
-            "right": Qt.AlignRight,
-        }[self.align]
-        flags = align | Qt.AlignVCenter | Qt.TextWordWrap | Qt.TextDontClip
+        flags = (
+            {
+                "left": Qt.AlignLeft,
+                "center": Qt.AlignHCenter,
+                "right": Qt.AlignRight,
+            }[self.align]
+            | Qt.AlignVCenter
+            | Qt.TextWordWrap
+            | Qt.TextDontClip
+        )
         metrics = QFontMetricsF(font)
-        bounds = metrics.boundingRect(rect, flags, self.text)
+        bounds = metrics.boundingRect(QRectF(0, 0, width, height), flags, self.text)
+        text_height = max(bounds.height(), metrics.height())
+        outline = max(1, int(pixel_size * 0.055))
+        pad = pixel_size * 0.25 if self.background else 0.0
+        margin_x = int(math.ceil(max(outline, pad) + 2.0))
+        margin_y = margin_x + int(math.ceil(max(0.0, text_height - height) / 2.0))
+
+        image = QImage(
+            width + margin_x * 2,
+            height + margin_y * 2,
+            QImage.Format_ARGB32_Premultiplied,
+        )
+        image.fill(Qt.transparent)
+        painter = QPainter(image)
+        painter.setRenderHints(
+            QPainter.RenderHint.Antialiasing | QPainter.RenderHint.TextAntialiasing
+        )
+        painter.setFont(font)
         text_rect = QRectF(
-            rect.left(),
-            rect.center().y() - bounds.height() / 2.0,
-            rect.width(),
-            max(bounds.height(), metrics.height()),
+            margin_x,
+            margin_y + (height - text_height) / 2.0,
+            width,
+            text_height,
         )
 
         if self.background:
-            pad = pixel_size * 0.25
             painter.setPen(Qt.NoPen)
             painter.setBrush(QColor(8, 11, 16, 168))
             painter.drawRoundedRect(
@@ -664,12 +736,14 @@ class TextSource(Source):
                 pixel_size * 0.18,
             )
 
-        outline = max(1, int(pixel_size * 0.055))
         painter.setPen(QColor(4, 7, 11, 210))
         for dx, dy in ((-outline, 0), (outline, 0), (0, -outline), (0, outline)):
             painter.drawText(text_rect.translated(dx, dy), flags, self.text)
         painter.setPen(QColor(self.color))
         painter.drawText(text_rect, flags, self.text)
+        painter.end()
+        self._cache_origin = (float(margin_x), float(margin_y))
+        return image
 
 
 SOURCE_TYPES = {

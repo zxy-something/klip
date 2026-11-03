@@ -4,10 +4,11 @@ Screen recorder for Windows inspired by OBS: compose scenes with video sources a
 
 ## Features
 
-- Screen, window, camera, image and text sources
+- Screen, window, webcam, image and text sources
 - Scenes with source positioning and resizing
 - Microphone and system audio, with level meter and mute
 - MP4 recording with configurable resolution, frame rate and quality
+- Cached text overlays, downscaled capture and a 1.2.0 camera fix keep the preview smooth and light on CPU
 - **F9** shortcut to start/stop recording
 
 ## Installation

@@ -484,6 +484,40 @@ def _capture_window_dc(
         user32.ReleaseDC(handle, window_dc)
 
 
+_WINDOW_CAPTURE_METHODS: dict[int, int] = {}
+
+
+def _window_capture_attempt(
+    method: int,
+    hwnd: int,
+    width: int,
+    height: int,
+    left: int,
+    top: int,
+    offset_x: int,
+    offset_y: int,
+) -> QImage | None:
+    if method == 0:
+        return _capture_window_dc(hwnd, width, height, offset_x, offset_y)
+    if method == 1:
+        return _capture_dib(
+            width, height, lambda mem_dc, _dc: user32.PrintWindow(hwnd, mem_dc, 0)
+        )
+    if method == 2:
+        return _capture_dib(
+            width,
+            height,
+            lambda mem_dc, _dc: user32.PrintWindow(hwnd, mem_dc, PW_RENDERFULLCONTENT),
+        )
+    return _capture_dib(
+        width,
+        height,
+        lambda mem_dc, screen_dc: gdi32.BitBlt(
+            mem_dc, 0, 0, width, height, screen_dc, left, top, SRCCOPY
+        ),
+    )
+
+
 def capture_window(hwnd: int) -> QImage | None:
     if not is_window(hwnd) or is_minimized(hwnd):
         return None
@@ -499,26 +533,22 @@ def capture_window(hwnd: int) -> QImage | None:
         offset_x = max(0, left - int(window_rect.left))
         offset_y = max(0, top - int(window_rect.top))
 
-    image = _capture_window_dc(hwnd, width, height, offset_x, offset_y)
-    if image is None or _looks_blank(image):
-        image = _capture_dib(
-            width, height, lambda mem_dc, _dc: user32.PrintWindow(hwnd, mem_dc, 0)
+    preferred = _WINDOW_CAPTURE_METHODS.get(hwnd, 0)
+    order = [preferred] + [index for index in range(4) if index != preferred]
+    last_image: QImage | None = None
+    for index in order:
+        image = _window_capture_attempt(
+            index, hwnd, width, height, left, top, offset_x, offset_y
         )
-    if image is None or _looks_blank(image):
-        image = _capture_dib(
-            width,
-            height,
-            lambda mem_dc, _dc: user32.PrintWindow(hwnd, mem_dc, PW_RENDERFULLCONTENT),
-        )
-    if image is None or _looks_blank(image):
-        image = _capture_dib(
-            width,
-            height,
-            lambda mem_dc, screen_dc: gdi32.BitBlt(mem_dc, 0, 0, width, height, screen_dc, left, top, SRCCOPY),
-        )
-    if image is None or image.isNull():
-        return None
-    return image
+        if image is None or image.isNull():
+            continue
+        last_image = image
+        if not _looks_blank(image):
+            if len(_WINDOW_CAPTURE_METHODS) > 128:
+                _WINDOW_CAPTURE_METHODS.clear()
+            _WINDOW_CAPTURE_METHODS[hwnd] = index
+            return image
+    return last_image
 
 
 CURSOR_SHOWING = 0x00000001

@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QApplication
 
 from .main_window import HTCAPTION, HTCLIENT
 from .recorder import RecordingSession
-from .sources import ScreenSource, TextSource, WindowSource, draw_mouse_cursor
+from .sources import CameraSource, ScreenSource, TextSource, WindowSource, draw_mouse_cursor
 from .win32util import _looks_blank, capture_window, cursor_image
 
 
@@ -204,6 +204,31 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         check("fast window capture", window_capture_ms < 45, f"{window_capture_ms:.1f} ms")
         window_source.dispose()
 
+        camera_devices = QMediaDevices.videoInputs()
+        if camera_devices:
+            camera_source = CameraSource(device_name=camera_devices[0].description())
+            camera_source.start()
+            deadline = time.monotonic() + 4
+            while time.monotonic() < deadline and camera_source.frames_received < 3:
+                _pump(app, 0.05)
+            frame_count = camera_source.frames_received
+            camera_image = camera_source._image
+            check(
+                "webcam delivers frames",
+                frame_count >= 3
+                and camera_image is not None
+                and not camera_image.isNull(),
+                f"{frame_count} frames · "
+                + (
+                    f"{camera_image.width()}x{camera_image.height()}"
+                    if camera_image is not None and not camera_image.isNull()
+                    else f"state {camera_source._state}"
+                ),
+            )
+            camera_source.stop()
+        else:
+            note("[INFO] no webcam available; webcam check skipped")
+
         canvas = QImage(240, 240, QImage.Format_ARGB32)
         canvas.fill(QColor("#101010"))
         painter = QPainter(canvas)
@@ -273,7 +298,7 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
             window.preview.refresh()
         preview_ms = (time.perf_counter() - start) / 20 * 1000
         note(f"[INFO] composed preview: {preview_ms:.1f} ms/frame")
-        check("smooth preview", preview_ms < 18, f"{preview_ms:.1f} ms")
+        check("smooth preview", preview_ms < 10, f"{preview_ms:.1f} ms")
 
         check(
             "custom title bar",

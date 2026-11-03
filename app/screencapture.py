@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 import time
 
-from PySide6.QtCore import QCoreApplication, QEvent, QThread, QTimer
+from PySide6.QtCore import QCoreApplication, QEvent, QThread, QTimer, Qt
 from PySide6.QtGui import QGuiApplication, QImage
 from PySide6.QtMultimedia import QMediaCaptureSession, QScreenCapture, QVideoSink
 
@@ -16,6 +16,34 @@ from .win32util import (
     window_bounds,
     window_title,
 )
+
+_TARGET_LOCK = threading.Lock()
+_TARGET_SIZE: tuple[int, int] = (0, 0)
+_TARGET_FPS = 30
+
+
+def _capture_target() -> tuple[int, int]:
+    with _TARGET_LOCK:
+        return _TARGET_SIZE
+
+
+def _capture_fps() -> int:
+    with _TARGET_LOCK:
+        return _TARGET_FPS
+
+
+def _fit_frame(image: QImage, target: tuple[int, int]) -> QImage:
+    width, height = target
+    if width <= 0 or height <= 0:
+        return image
+    if image.width() <= width and image.height() <= height:
+        return image
+    return image.scaled(
+        width,
+        height,
+        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.TransformationMode.SmoothTransformation,
+    )
 
 
 class ScreenPump:
@@ -33,6 +61,8 @@ class ScreenPump:
         self._frame: QImage | None = None
         self._stamp = 0.0
         self._frames = 0
+        self._target = _capture_target()
+        self._interval = 1.0 / _capture_fps()
         self._worker = _ScreenWorker(self, screen)
         self._worker.start()
 
@@ -40,11 +70,18 @@ class ScreenPump:
         if rect is not None:
             self._rect = rect
 
+    def set_target_size(self, size: tuple[int, int]) -> None:
+        self._target = size
+
+    def set_fps(self, fps: int) -> None:
+        self._interval = 1.0 / max(1, min(120, int(fps)))
+
     def latest(self) -> tuple[QImage | None, float]:
         with self._lock:
             return self._frame, self._stamp
 
     def _publish(self, image: QImage) -> None:
+        image = _fit_frame(image, self._target)
         with self._lock:
             self._frame = image
             self._stamp = time.monotonic()
@@ -91,7 +128,7 @@ class _ScreenWorker(QThread):
             if not frame.isValid():
                 return
             now = time.monotonic()
-            if now - last < 0.012:
+            if now - last < self._pump._interval:
                 return
             last = now
             image = frame.toImage()
@@ -143,6 +180,14 @@ class WindowPump(threading.Thread):
         self._bounds: tuple[int, int, int, int] | None = None
         self._title = ""
         self._stamp = 0.0
+        self._target = _capture_target()
+        self._interval = 1.0 / _capture_fps()
+
+    def set_target_size(self, size: tuple[int, int]) -> None:
+        self._target = size
+
+    def set_fps(self, fps: int) -> None:
+        self._interval = 1.0 / max(1, min(120, int(fps)))
 
     def latest(
         self,
@@ -159,6 +204,7 @@ class WindowPump(threading.Thread):
         bounds: tuple[int, int, int, int] | None,
         title: str,
     ) -> None:
+        image = _fit_frame(image, self._target)
         with self._lock:
             self._image = image
             self._bounds = bounds
@@ -171,7 +217,7 @@ class WindowPump(threading.Thread):
             started = time.monotonic()
             interval = 0.5
             if is_window(self.hwnd) and not is_minimized(self.hwnd):
-                interval = 0.033
+                interval = self._interval
                 title = window_title(self.hwnd)
                 try:
                     image = capture_window(self.hwnd)
@@ -188,6 +234,32 @@ class WindowPump(threading.Thread):
 _PUMPS: dict[str, ScreenPump] = {}
 _WINDOW_PUMPS: dict[int, WindowPump] = {}
 _PUMPS_LOCK = threading.Lock()
+
+
+def set_capture_target_size(width: int, height: int) -> None:
+    global _TARGET_SIZE
+    size = (max(1, int(width)), max(1, int(height)))
+    if size == _capture_target():
+        return
+    with _TARGET_LOCK:
+        _TARGET_SIZE = size
+    with _PUMPS_LOCK:
+        pumps = list(_PUMPS.values()) + list(_WINDOW_PUMPS.values())
+    for pump in pumps:
+        pump.set_target_size(size)
+
+
+def set_capture_fps(fps: int) -> None:
+    global _TARGET_FPS
+    fps = max(1, min(120, int(fps)))
+    if fps == _capture_fps():
+        return
+    with _TARGET_LOCK:
+        _TARGET_FPS = fps
+    with _PUMPS_LOCK:
+        pumps = list(_PUMPS.values()) + list(_WINDOW_PUMPS.values())
+    for pump in pumps:
+        pump.set_fps(fps)
 
 
 def screen_pump(

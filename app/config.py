@@ -8,7 +8,7 @@ from pathlib import Path
 from PySide6.QtCore import QStandardPaths
 
 APP_NAME = "Klip"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 
 
 def app_data_dir() -> Path:

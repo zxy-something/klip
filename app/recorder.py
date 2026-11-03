@@ -4,6 +4,7 @@ import math
 import threading
 import time
 from array import array
+from collections import deque
 from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QObject, QSize, QTimer, QUrl, Signal
@@ -112,7 +113,7 @@ class RecordingSession(QObject):
         self._sys_pcm = bytearray()
         self._mix_timer: QTimer | None = None
         self._last_level_emit = 0.0
-        self._audio_queue: list[bytes] = []
+        self._audio_queue: deque[bytes] = deque()
         self._video_queue: list[QVideoFrame] = []
         self._frame_index = 0
         self._failed = False
@@ -290,7 +291,7 @@ class RecordingSession(QObject):
             buffer = QAudioBuffer(self._audio_queue[0], fmt)
             if not input_.sendAudioBuffer(buffer):
                 break
-            self._audio_queue.pop(0)
+            self._audio_queue.popleft()
 
     def push_frame(self, image: QImage, repeat: int = 1) -> None:
         if self._failed or self._stopping or repeat <= 0:
