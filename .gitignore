@@ -7,7 +7,6 @@ build/
 build2/
 dist/
 dist2/
-*.nupkg
 *.exe
 
 tools/**/*.mp4

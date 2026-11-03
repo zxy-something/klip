@@ -12,14 +12,6 @@ Screen recorder for Windows inspired by OBS: compose scenes with video sources a
 
 ## Installation
 
-### Chocolatey
-
-```powershell
-choco install klip
-```
-
-### Portable
-
 Download `Klip.exe` from [Releases](https://github.com/zxy-something/klip/releases) and run it. No installation required.
 
 Requires Windows 10/11 (64-bit).
