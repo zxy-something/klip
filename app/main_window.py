@@ -70,11 +70,11 @@ from .win32util import (
 )
 
 KIND_LABELS = {
-    "screen": "Captura de tela",
-    "window": "Captura de janela",
+    "screen": "Screen capture",
+    "window": "Window capture",
     "camera": "Webcam",
-    "image": "Imagem",
-    "text": "Texto",
+    "image": "Image",
+    "text": "Text",
 }
 
 WM_MOUSEMOVE = 0x0200
@@ -190,10 +190,10 @@ class MainWindow(QMainWindow):
                     except Exception:
                         continue
         if not scenes:
-            scene = Scene("Cena 1")
+            scene = Scene("Scene 1")
             screen = QGuiApplication.primaryScreen()
             if screen is not None:
-                source = ScreenSource(name="Tela inteira", screen_name=screen.name())
+                source = ScreenSource(name="Full screen", screen_name=screen.name())
                 width = self.config.output_width
                 height = self.config.output_height
                 geo = screen.geometry()
@@ -250,7 +250,7 @@ class MainWindow(QMainWindow):
         outer.addWidget(preview_holder, 1)
         outer.addWidget(self._build_docks())
 
-        self.status_label = QLabel("Pronto")
+        self.status_label = QLabel("Ready")
         self.timer_label = QLabel("00:00:00")
         self.timer_label.setObjectName("TimerLabel")
         self.status_meta = QLabel("MP4 · H.264")
@@ -284,13 +284,13 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._title_label, 1)
 
         self._min_button = self._title_button(
-            "minimize", "Minimizar", self.showMinimized
+            "minimize", "Minimize", self.showMinimized
         )
         self._max_button = self._title_button(
-            "maximize", "Maximizar", self._toggle_maximize
+            "maximize", "Maximize", self._toggle_maximize
         )
         self._close_button = self._title_button(
-            "close", "Fechar", self.close, "TitleCloseButton"
+            "close", "Close", self.close, "TitleCloseButton"
         )
         for button in (self._min_button, self._max_button, self._close_button):
             layout.addWidget(button)
@@ -329,7 +329,7 @@ class MainWindow(QMainWindow):
         self._max_button.setIcon(
             icons.window_icon("restore" if maximized else "maximize", 16)
         )
-        self._max_button.setToolTip("Restaurar" if maximized else "Maximizar")
+        self._max_button.setToolTip("Restore" if maximized else "Maximize")
         if self._title_bar is not None:
             self._title_bar.setVisible(not self._fullscreen)
 
@@ -496,85 +496,85 @@ class MainWindow(QMainWindow):
         bar = self._title_menu
         bar.setNativeMenuBar(False)
 
-        file_menu = bar.addMenu("&Arquivo")
-        folder_action = QAction("Abrir pasta de gravações", self)
+        file_menu = bar.addMenu("&File")
+        folder_action = QAction("Open recordings folder", self)
         folder_action.setShortcut(QKeySequence("Ctrl+Shift+O"))
         folder_action.triggered.connect(self.open_output_folder)
         file_menu.addAction(folder_action)
         file_menu.addSeparator()
-        settings_action = QAction("Configurações…", self)
+        settings_action = QAction("Settings…", self)
         settings_action.setShortcut(QKeySequence("Ctrl+,"))
         settings_action.triggered.connect(self.open_settings)
         file_menu.addAction(settings_action)
         file_menu.addSeparator()
-        quit_action = QAction("Sair", self)
+        quit_action = QAction("Quit", self)
         quit_action.setShortcut(QKeySequence("Ctrl+Q"))
         quit_action.triggered.connect(self.close)
         file_menu.addAction(quit_action)
 
-        edit_menu = bar.addMenu("&Editar")
-        add_menu = edit_menu.addMenu("Adicionar fonte")
+        edit_menu = bar.addMenu("&Edit")
+        add_menu = edit_menu.addMenu("Add source")
         for text, kind, slot in (
-            ("Tela inteira", "screen", self.add_screen_source),
-            ("Janela…", "window", self.add_window_source),
+            ("Full screen", "screen", self.add_screen_source),
+            ("Window…", "window", self.add_window_source),
             ("Webcam", "camera", self.add_camera_source),
-            ("Imagem…", "image", self.add_image_source),
-            ("Texto", "text", self.add_text_source),
+            ("Image…", "image", self.add_image_source),
+            ("Text", "text", self.add_text_source),
         ):
             action = QAction(icons.kind_pixmap(kind, 16), text, self)
             action.triggered.connect(slot)
             add_menu.addAction(action)
         edit_menu.addSeparator()
-        properties_action = QAction("Propriedades da fonte…", self)
+        properties_action = QAction("Source properties…", self)
         properties_action.triggered.connect(self.open_properties)
         edit_menu.addAction(properties_action)
-        remove_action = QAction("Remover fonte", self)
+        remove_action = QAction("Remove source", self)
         remove_action.triggered.connect(self.delete_selected_source)
         edit_menu.addAction(remove_action)
 
-        view_menu = bar.addMenu("E&xibir")
-        refresh_action = QAction("Atualizar prévia", self)
+        view_menu = bar.addMenu("&View")
+        refresh_action = QAction("Refresh preview", self)
         refresh_action.setShortcut(QKeySequence("F5"))
         refresh_action.triggered.connect(self.preview_refresh)
         view_menu.addAction(refresh_action)
-        fullscreen_action = QAction("Tela cheia", self)
+        fullscreen_action = QAction("Fullscreen", self)
         fullscreen_action.setShortcut(QKeySequence("F11"))
         fullscreen_action.triggered.connect(self.toggle_fullscreen)
         view_menu.addAction(fullscreen_action)
 
-        profile_menu = bar.addMenu("&Perfil")
-        self.mute_action = QAction("Silenciar microfone", self)
+        profile_menu = bar.addMenu("&Profile")
+        self.mute_action = QAction("Mute microphone", self)
         self.mute_action.setCheckable(True)
         self.mute_action.toggled.connect(self.mute_btn_set)
         profile_menu.addAction(self.mute_action)
-        refresh_mics = QAction("Atualizar microfones", self)
+        refresh_mics = QAction("Refresh microphones", self)
         refresh_mics.triggered.connect(self.refresh_microphones)
         profile_menu.addAction(refresh_mics)
 
-        scenes_menu = bar.addMenu("&Coleção de cenas")
-        new_scene = QAction("Nova cena", self)
+        scenes_menu = bar.addMenu("&Scene collection")
+        new_scene = QAction("New scene", self)
         new_scene.triggered.connect(self.add_scene)
         scenes_menu.addAction(new_scene)
-        dup_scene = QAction("Duplicar cena", self)
+        dup_scene = QAction("Duplicate scene", self)
         dup_scene.triggered.connect(self.duplicate_scene)
         scenes_menu.addAction(dup_scene)
-        rename_scene = QAction("Renomear cena…", self)
+        rename_scene = QAction("Rename scene…", self)
         rename_scene.triggered.connect(lambda: self.rename_scene(self.current_scene_index))
         scenes_menu.addAction(rename_scene)
-        delete_scene = QAction("Excluir cena", self)
+        delete_scene = QAction("Delete scene", self)
         delete_scene.triggered.connect(self.delete_scene)
         scenes_menu.addAction(delete_scene)
 
-        tools_menu = bar.addMenu("&Ferramentas")
+        tools_menu = bar.addMenu("&Tools")
         tools_menu.addAction(folder_action)
         tools_menu.addSeparator()
         tools_menu.addAction(settings_action)
 
-        help_menu = bar.addMenu("A&juda")
-        shortcuts_action = QAction("Atalhos de teclado", self)
+        help_menu = bar.addMenu("&Help")
+        shortcuts_action = QAction("Keyboard shortcuts", self)
         shortcuts_action.triggered.connect(self.show_shortcuts)
         help_menu.addAction(shortcuts_action)
-        about_action = QAction(icons.tool_icon("info", 16), "Sobre o Klip", self)
+        about_action = QAction(icons.tool_icon("info", 16), "About Klip", self)
         about_action.triggered.connect(self.open_about)
         help_menu.addAction(about_action)
 
@@ -628,7 +628,7 @@ class MainWindow(QMainWindow):
         return splitter
 
     def _build_scenes_dock(self) -> QWidget:
-        panel, body = self._dock("Cenas")
+        panel, body = self._dock("Scenes")
         self.scene_list = SceneList()
         self.scene_list.sceneClicked.connect(self.switch_scene)
         self.scene_list.sceneDoubleClicked.connect(self.rename_scene)
@@ -636,9 +636,9 @@ class MainWindow(QMainWindow):
 
         row = QHBoxLayout()
         row.setSpacing(1)
-        self.scene_add_btn = self._icon_button("plus", "Nova cena", self.add_scene)
-        self.scene_dup_btn = self._icon_button("copy", "Duplicar cena", self.duplicate_scene)
-        self.scene_del_btn = self._icon_button("trash", "Excluir cena", self.delete_scene)
+        self.scene_add_btn = self._icon_button("plus", "New scene", self.add_scene)
+        self.scene_dup_btn = self._icon_button("copy", "Duplicate scene", self.duplicate_scene)
+        self.scene_del_btn = self._icon_button("trash", "Delete scene", self.delete_scene)
         row.addWidget(self.scene_add_btn)
         row.addWidget(self.scene_dup_btn)
         row.addWidget(self.scene_del_btn)
@@ -647,7 +647,7 @@ class MainWindow(QMainWindow):
         return panel
 
     def _build_sources_dock(self) -> QWidget:
-        panel, body = self._dock("Fontes")
+        panel, body = self._dock("Sources")
         self.source_list = SourceList()
         self.source_list.sourceClicked.connect(self.select_source)
         self.source_list.sourceDoubleClicked.connect(self.open_properties)
@@ -660,23 +660,23 @@ class MainWindow(QMainWindow):
         self.add_source_btn.setIcon(icons.tool_icon("plus", 18))
         self.add_source_btn.setIconSize(QSize(17, 17))
         self.add_source_btn.setFixedSize(27, 27)
-        self.add_source_btn.setToolTip("Adicionar fonte")
+        self.add_source_btn.setToolTip("Add source")
         self.add_source_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         menu = QMenu(self)
         for text, kind, slot in (
-            ("Tela inteira", "screen", self.add_screen_source),
-            ("Janela…", "window", self.add_window_source),
+            ("Full screen", "screen", self.add_screen_source),
+            ("Window…", "window", self.add_window_source),
             ("Webcam", "camera", self.add_camera_source),
-            ("Imagem…", "image", self.add_image_source),
-            ("Texto", "text", self.add_text_source),
+            ("Image…", "image", self.add_image_source),
+            ("Text", "text", self.add_text_source),
         ):
             action = menu.addAction(icons.kind_pixmap(kind, 16), text)
             action.triggered.connect(slot)
         self.add_source_btn.setMenu(menu)
-        self.source_up_btn = self._icon_button("up", "Mover para cima", lambda: self.move_source(-1))
-        self.source_down_btn = self._icon_button("down", "Mover para baixo", lambda: self.move_source(1))
-        self.source_del_btn = self._icon_button("trash", "Remover fonte", self.delete_selected_source)
-        self.source_props_btn = self._icon_button("settings", "Propriedades da fonte", self.open_properties)
+        self.source_up_btn = self._icon_button("up", "Move up", lambda: self.move_source(-1))
+        self.source_down_btn = self._icon_button("down", "Move down", lambda: self.move_source(1))
+        self.source_del_btn = self._icon_button("trash", "Remove source", self.delete_selected_source)
+        self.source_props_btn = self._icon_button("settings", "Source properties", self.open_properties)
         row.addWidget(self.add_source_btn)
         row.addWidget(self.source_del_btn)
         row.addWidget(self.source_up_btn)
@@ -687,18 +687,18 @@ class MainWindow(QMainWindow):
         return panel
 
     def _build_audio_dock(self) -> QWidget:
-        panel, body = self._dock("Mixer de Áudio")
+        panel, body = self._dock("Audio mixer")
         title_row = QHBoxLayout()
         title_row.setSpacing(6)
-        mic_label = QLabel("Áudio")
+        mic_label = QLabel("Audio")
         mic_label.setStyleSheet("color: #dddddd; font-size: 11px;")
         title_row.addWidget(mic_label)
         title_row.addStretch(1)
-        self.mute_btn = QPushButton("Mudo")
+        self.mute_btn = QPushButton("Mute")
         self.mute_btn.setObjectName("FlatButton")
         self.mute_btn.setCheckable(True)
         self.mute_btn.setFixedHeight(22)
-        self.mute_btn.setToolTip("Silenciar somente o microfone (o som do computador continua)")
+        self.mute_btn.setToolTip("Mute only the microphone (computer audio keeps playing)")
         title_row.addWidget(self.mute_btn)
         body.addLayout(title_row)
 
@@ -707,7 +707,7 @@ class MainWindow(QMainWindow):
 
         meter_row = QHBoxLayout()
         meter_row.setSpacing(6)
-        meter_label = QLabel("Nível")
+        meter_label = QLabel("Level")
         meter_label.setStyleSheet(f"color: {MUTED}; font-size: 10px;")
         meter_label.setFixedWidth(30)
         meter_row.addWidget(meter_label)
@@ -715,34 +715,34 @@ class MainWindow(QMainWindow):
         meter_row.addWidget(self.level_meter, 1)
         body.addLayout(meter_row)
         body.addWidget(
-            muted_label("Escolha o microfone ou o som do computador para a gravação.", 10)
+            muted_label("Choose the microphone or computer audio for the recording.", 10)
         )
         body.addStretch(1)
         return panel
 
     def _build_transitions_dock(self) -> QWidget:
-        panel, body = self._dock("Transições de Cena")
+        panel, body = self._dock("Scene transitions")
         transition_row = QHBoxLayout()
         transition_row.setSpacing(6)
-        transition_label = QLabel("Transição")
+        transition_label = QLabel("Transition")
         transition_label.setStyleSheet("color: #d5d5d5; font-size: 11px;")
         transition_label.setFixedWidth(62)
         self.transition_combo = QComboBox()
-        self.transition_combo.addItem("Corte")
+        self.transition_combo.addItem("Cut")
         transition_row.addWidget(transition_label)
         transition_row.addWidget(self.transition_combo, 1)
         body.addLayout(transition_row)
 
         duration_row = QHBoxLayout()
         duration_row.setSpacing(6)
-        duration_label = QLabel("Duração")
+        duration_label = QLabel("Duration")
         duration_label.setStyleSheet("color: #d5d5d5; font-size: 11px;")
         duration_label.setFixedWidth(62)
         self.transition_duration = QSpinBox()
         self.transition_duration.setRange(0, 0)
         self.transition_duration.setSuffix(" ms")
         self.transition_duration.setEnabled(False)
-        self.transition_duration.setToolTip("O Klip usa corte direto entre cenas.")
+        self.transition_duration.setToolTip("Klip uses hard cuts between scenes.")
         duration_row.addWidget(duration_label)
         duration_row.addWidget(self.transition_duration, 1)
         body.addLayout(duration_row)
@@ -750,37 +750,37 @@ class MainWindow(QMainWindow):
         return panel
 
     def _build_controls_dock(self) -> QWidget:
-        panel, body = self._dock("Controles")
-        self.record_btn = QPushButton("Iniciar gravação")
+        panel, body = self._dock("Controls")
+        self.record_btn = QPushButton("Start recording")
         self.record_btn.setObjectName("RecordButton")
         self.record_btn.setCheckable(True)
         self.record_btn.setIcon(icons.tool_icon("record", 16, RED))
         self.record_btn.setIconSize(QSize(14, 14))
         self.record_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.record_btn.setMinimumHeight(32)
-        self.record_btn.setToolTip("Iniciar gravação (F9)")
+        self.record_btn.setToolTip("Start recording (F9)")
         body.addWidget(self.record_btn)
 
-        self.file_label = QLabel("Pronto para gravar")
+        self.file_label = QLabel("Ready to record")
         self.file_label.setObjectName("FileLabel")
         self.file_label.setWordWrap(True)
         self.file_label.setMinimumHeight(26)
         self.file_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         body.addWidget(self.file_label)
 
-        self.open_folder_btn = QPushButton("Abrir pasta")
+        self.open_folder_btn = QPushButton("Open folder")
         self.open_folder_btn.setObjectName("FlatButton")
         self.open_folder_btn.setIcon(icons.tool_icon("folder", 16))
         self.open_folder_btn.setIconSize(QSize(15, 15))
         body.addWidget(self.open_folder_btn)
 
-        self.settings_btn = QPushButton("Configurações")
+        self.settings_btn = QPushButton("Settings")
         self.settings_btn.setObjectName("FlatButton")
         self.settings_btn.setIcon(icons.tool_icon("settings", 16))
         self.settings_btn.setIconSize(QSize(15, 15))
         body.addWidget(self.settings_btn)
 
-        self.exit_btn = QPushButton("Sair")
+        self.exit_btn = QPushButton("Quit")
         self.exit_btn.setObjectName("FlatButton")
         body.addWidget(self.exit_btn)
         body.addStretch(1)
@@ -837,7 +837,7 @@ class MainWindow(QMainWindow):
             return
         if self._props_dialog is None:
             dialog = QDialog(self)
-            dialog.setWindowTitle("Propriedades da fonte")
+            dialog.setWindowTitle("Source properties")
             dialog.setModal(False)
             dialog.resize(440, 660)
             layout = QVBoxLayout(dialog)
@@ -853,7 +853,7 @@ class MainWindow(QMainWindow):
 
             buttons = QHBoxLayout()
             buttons.addStretch(1)
-            close_button = QPushButton("Fechar")
+            close_button = QPushButton("Close")
             close_button.clicked.connect(dialog.close)
             buttons.addWidget(close_button)
             layout.addLayout(buttons)
@@ -861,7 +861,7 @@ class MainWindow(QMainWindow):
             dialog.finished.connect(self._properties_closed)
             self._props_dialog = dialog
             self.props_scroll = scroll
-        self._props_dialog.setWindowTitle(f"Propriedades — {source.name}")
+        self._props_dialog.setWindowTitle(f"Source properties — {source.name}")
         self._rebuild_properties()
         self._props_dialog.show()
         self._props_dialog.raise_()
@@ -889,13 +889,13 @@ class MainWindow(QMainWindow):
     def show_shortcuts(self) -> None:
         QMessageBox.information(
             self,
-            "Atalhos de teclado",
-            "F9 — iniciar/parar gravação\n"
-            "F5 — atualizar prévia\n"
-            "F11 — tela cheia\n"
-            "Delete — remover fonte selecionada\n"
-            "Setas — mover fonte 1 px (Shift: 10 px)\n"
-            "Clique duplo — abrir propriedades da fonte",
+            "Keyboard shortcuts",
+            "F9 — start/stop recording\n"
+            "F5 — refresh preview\n"
+            "F11 — fullscreen\n"
+            "Delete — remove selected source\n"
+            "Arrow keys — move source 1 px (Shift: 10 px)\n"
+            "Double-click — open source properties",
         )
 
     def mute_btn_set(self, checked: bool) -> None:
@@ -954,7 +954,7 @@ class MainWindow(QMainWindow):
             reply = QMessageBox.question(
                 self,
                 "Klip",
-                "Existe uma gravação em andamento. Parar e sair?",
+                "A recording is in progress. Stop it and quit?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No,
             )
@@ -1019,7 +1019,7 @@ class MainWindow(QMainWindow):
         return f"{base} {index}"
 
     def add_scene(self) -> None:
-        scene = Scene(self._unique_scene_name(f"Cena {len(self.scenes) + 1}"))
+        scene = Scene(self._unique_scene_name(f"Scene {len(self.scenes) + 1}"))
         self.scenes.append(scene)
         self.switch_scene(len(self.scenes) - 1)
         self._schedule_save()
@@ -1027,7 +1027,7 @@ class MainWindow(QMainWindow):
     def duplicate_scene(self) -> None:
         current = self.current_scene()
         clone = Scene.from_dict(current.to_dict())
-        clone.name = self._unique_scene_name(f"{current.name} (cópia)")
+        clone.name = self._unique_scene_name(f"{current.name} (copy)")
         self.scenes.append(clone)
         self.switch_scene(len(self.scenes) - 1)
         self._schedule_save()
@@ -1038,8 +1038,8 @@ class MainWindow(QMainWindow):
         scene = self.current_scene()
         reply = QMessageBox.question(
             self,
-            "Excluir cena",
-            f"Excluir a cena “{scene.name}”?",
+            "Delete scene",
+            f"Delete the scene “{scene.name}”?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -1058,7 +1058,7 @@ class MainWindow(QMainWindow):
         if not 0 <= index < len(self.scenes):
             return
         scene = self.scenes[index]
-        name, ok = QInputDialog.getText(self, "Renomear cena", "Nome da cena:", text=scene.name)
+        name, ok = QInputDialog.getText(self, "Rename scene", "Scene name:", text=scene.name)
         if not ok:
             return
         name = name.strip()
@@ -1100,15 +1100,15 @@ class MainWindow(QMainWindow):
             source.start()
         self._refresh_all()
         self._schedule_save()
-        self._set_status(f"Fonte “{source.name}” adicionada")
+        self._set_status(f"Source “{source.name}” added")
 
     def add_screen_source(self) -> None:
         screens = QGuiApplication.screens()
         if not screens:
-            QMessageBox.information(self, "Klip", "Nenhum monitor foi encontrado.")
+            QMessageBox.information(self, "Klip", "No monitor was found.")
             return
         screen = QGuiApplication.primaryScreen() or screens[0]
-        name = "Tela inteira" if len(screens) == 1 else f"Tela — {screen.name()}"
+        name = "Full screen" if len(screens) == 1 else f"Screen — {screen.name()}"
         source = ScreenSource(name=self._unique_source_name(name), screen_name=screen.name())
         geo = screen.geometry()
         self._fit_source(source, geo.width(), geo.height(), *self.output_size())
@@ -1119,7 +1119,7 @@ class MainWindow(QMainWindow):
         if not dialog.exec() or dialog.selected is None:
             return
         window = dialog.selected
-        title = window.title.strip() or "Janela"
+        title = window.title.strip() or "Window"
         if len(title) > 48:
             title = title[:45] + "…"
         source = WindowSource(
@@ -1135,7 +1135,7 @@ class MainWindow(QMainWindow):
         devices = QMediaDevices.videoInputs()
         if not devices:
             QMessageBox.information(
-                self, "Klip", "Nenhuma webcam foi encontrada neste computador."
+                self, "Klip", "No webcam was found on this computer."
             )
             return
         device = QMediaDevices.defaultVideoInput() or devices[0]
@@ -1152,9 +1152,9 @@ class MainWindow(QMainWindow):
     def add_image_source(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Escolher imagem",
+            "Choose image",
             "",
-            "Imagens (*.png *.jpg *.jpeg *.webp *.bmp *.gif *.avif);;Todos os arquivos (*.*)",
+            "Images (*.png *.jpg *.jpeg *.webp *.bmp *.gif *.avif);;All files (*.*)",
         )
         if not path:
             return
@@ -1174,8 +1174,8 @@ class MainWindow(QMainWindow):
 
     def add_text_source(self) -> None:
         source = TextSource(
-            name=self._unique_source_name("Texto"),
-            text="Seu texto aqui",
+            name=self._unique_source_name("Text"),
+            text="Your text here",
             x=0.08,
             y=0.08,
             w=0.84,
@@ -1222,7 +1222,7 @@ class MainWindow(QMainWindow):
         self.selected_source_id = None
         self._refresh_all()
         self._schedule_save()
-        self._set_status(f"Fonte “{source.name}” removida")
+        self._set_status(f"Source “{source.name}” removed")
 
     def move_source(self, delta: int) -> None:
         sources = self._current_sources()
@@ -1248,7 +1248,7 @@ class MainWindow(QMainWindow):
             return
         source.name = name
         if self._props_dialog is not None:
-            self._props_dialog.setWindowTitle(f"Propriedades — {source.name}")
+            self._props_dialog.setWindowTitle(f"Source properties — {source.name}")
         self.source_list.rebuild(self._current_sources(), self.selected_source_id)
         self.preview.update()
         self._schedule_save()
@@ -1275,21 +1275,21 @@ class MainWindow(QMainWindow):
             return
 
         name_edit = QLineEdit(source.name)
-        name_edit.setPlaceholderText("Nome da fonte")
+        name_edit.setPlaceholderText("Source name")
         name_edit.editingFinished.connect(lambda: self._rename_source(source, name_edit))
         layout.addWidget(name_edit)
 
-        info = QLabel(f"{KIND_LABELS.get(source.kind, 'Fonte')} · {source.status_text()}")
+        info = QLabel(f"{KIND_LABELS.get(source.kind, 'Source')} · {source.status_text()}")
         info.setWordWrap(True)
         info.setStyleSheet(f"color: {MUTED}; font-size: 10px; background: transparent;")
         layout.addWidget(info)
 
         quick = QHBoxLayout()
         quick.setSpacing(6)
-        fit = QPushButton("Ajustar à tela")
+        fit = QPushButton("Fit to screen")
         fit.setObjectName("FlatButton")
         fit.clicked.connect(lambda: self._quick_fit(source))
-        center = QPushButton("Centralizar")
+        center = QPushButton("Center")
         center.setObjectName("FlatButton")
         center.clicked.connect(lambda: self._quick_center(source))
         quick.addWidget(fit)
@@ -1310,7 +1310,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(self._image_properties(source))
 
         layout.addStretch(1)
-        remove = QPushButton("Remover fonte")
+        remove = QPushButton("Remove source")
         remove.setObjectName("DangerButton")
         remove.clicked.connect(self.delete_selected_source)
         layout.addWidget(remove)
@@ -1325,7 +1325,7 @@ class MainWindow(QMainWindow):
         row = QHBoxLayout(widget)
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
-        label = QLabel("Opacidade")
+        label = QLabel("Opacity")
         label.setStyleSheet("color: #c6d0e0; font-size: 11px; background: transparent;")
         label.setFixedWidth(64)
         slider = QSlider(Qt.Orientation.Horizontal)
@@ -1365,7 +1365,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(7)
-        layout.addWidget(self._property_title("Conteúdo"))
+        layout.addWidget(self._property_title("Content"))
 
         editor = QPlainTextEdit()
         editor.setPlainText(source.text)
@@ -1376,7 +1376,7 @@ class MainWindow(QMainWindow):
 
         size_row = QHBoxLayout()
         size_row.setSpacing(8)
-        size_label = QLabel("Tamanho")
+        size_label = QLabel("Size")
         size_label.setStyleSheet("color: #c6d0e0; font-size: 11px; background: transparent;")
         size_label.setFixedWidth(64)
         size_slider = QSlider(Qt.Orientation.Horizontal)
@@ -1397,11 +1397,11 @@ class MainWindow(QMainWindow):
         style_row = QHBoxLayout()
         style_row.setSpacing(7)
         color_button = QPushButton(source.color.upper())
-        color_button.setToolTip("Cor do texto")
+        color_button.setToolTip("Text color")
         self._style_color_button(color_button, source.color)
         color_button.clicked.connect(lambda: self._pick_text_color(source, color_button))
         style_row.addWidget(color_button)
-        bold = QCheckBox("Negrito")
+        bold = QCheckBox("Bold")
         bold.setChecked(source.bold)
         bold.toggled.connect(lambda checked: self._text_bold_changed(source, checked))
         style_row.addWidget(bold)
@@ -1409,11 +1409,11 @@ class MainWindow(QMainWindow):
 
         align_row = QHBoxLayout()
         align_row.setSpacing(8)
-        align_label = QLabel("Alinhamento")
+        align_label = QLabel("Alignment")
         align_label.setStyleSheet("color: #c6d0e0; font-size: 11px; background: transparent;")
         align_label.setFixedWidth(64)
         align = QComboBox()
-        for label, value in (("Esquerda", "left"), ("Centro", "center"), ("Direita", "right")):
+        for label, value in (("Left", "left"), ("Center", "center"), ("Right", "right")):
             align.addItem(label, value)
         align.setCurrentIndex({"left": 0, "center": 1, "right": 2}.get(source.align, 1))
         align.currentIndexChanged.connect(
@@ -1423,7 +1423,7 @@ class MainWindow(QMainWindow):
         align_row.addWidget(align, 1)
         layout.addLayout(align_row)
 
-        background = QCheckBox("Fundo semitransparente")
+        background = QCheckBox("Semi-transparent background")
         background.setChecked(source.background)
         background.toggled.connect(lambda checked: self._text_background_changed(source, checked))
         layout.addWidget(background)
@@ -1466,7 +1466,7 @@ class MainWindow(QMainWindow):
         )
 
     def _pick_text_color(self, source: TextSource, button: QPushButton) -> None:
-        color = QColorDialog.getColor(QColor(source.color), self, "Cor do texto")
+        color = QColorDialog.getColor(QColor(source.color), self, "Text color")
         if color.isValid():
             source.color = color.name()
             self._style_color_button(button, source.color)
@@ -1490,7 +1490,7 @@ class MainWindow(QMainWindow):
             lambda _index: self._screen_changed(source, combo.currentData())
         )
         layout.addWidget(combo)
-        cursor = QCheckBox("Capturar cursor do mouse")
+        cursor = QCheckBox("Capture mouse cursor")
         cursor.setChecked(source.capture_cursor)
         cursor.toggled.connect(
             lambda checked: self._cursor_capture_changed(source, checked)
@@ -1516,19 +1516,19 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
-        layout.addWidget(self._property_title("Janela"))
-        title = QLabel(source.title or "Janela não selecionada")
+        layout.addWidget(self._property_title("Window"))
+        title = QLabel(source.title or "No window selected")
         title.setWordWrap(True)
         title.setStyleSheet("color: #c6d0e0; font-size: 11px; background: transparent;")
         layout.addWidget(title)
         process = QLabel(source.process or "—")
         process.setStyleSheet(f"color: {MUTED}; font-size: 10px; background: transparent;")
         layout.addWidget(process)
-        change = QPushButton("Escolher outra janela…")
+        change = QPushButton("Choose another window…")
         change.setObjectName("FlatButton")
         change.clicked.connect(lambda: self._change_window(source))
         layout.addWidget(change)
-        cursor = QCheckBox("Capturar cursor do mouse")
+        cursor = QCheckBox("Capture mouse cursor")
         cursor.setChecked(source.capture_cursor)
         cursor.toggled.connect(
             lambda checked: self._cursor_capture_changed(source, checked)
@@ -1555,12 +1555,12 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(7)
-        layout.addWidget(self._property_title("Câmera"))
+        layout.addWidget(self._property_title("Camera"))
 
         device_combo = QComboBox()
         devices = QMediaDevices.videoInputs()
         if not devices:
-            device_combo.addItem("Nenhuma webcam encontrada", "")
+            device_combo.addItem("No webcam found", "")
             device_combo.setEnabled(False)
         else:
             for device in devices:
@@ -1573,16 +1573,16 @@ class MainWindow(QMainWindow):
         layout.addWidget(device_combo)
 
         shape_combo = QComboBox()
-        shape_combo.addItem("Arredondado", "rounded")
-        shape_combo.addItem("Círculo", "circle")
+        shape_combo.addItem("Rounded", "rounded")
+        shape_combo.addItem("Circle", "circle")
         shape_combo.setCurrentIndex(0 if source.shape == "rounded" else 1)
         shape_combo.currentIndexChanged.connect(
             lambda _index: self._camera_shape_changed(source, shape_combo.currentData())
         )
-        layout.addWidget(self._property_title("Formato"))
+        layout.addWidget(self._property_title("Shape"))
         layout.addWidget(shape_combo)
 
-        mirror = QCheckBox("Espelhar imagem")
+        mirror = QCheckBox("Mirror image")
         mirror.setChecked(source.mirror)
         mirror.toggled.connect(lambda checked: self._camera_mirror_changed(source, checked))
         layout.addWidget(mirror)
@@ -1616,16 +1616,16 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(7)
-        layout.addWidget(self._property_title("Imagem"))
-        path = QLabel(Path(source.path).name if source.path else "Nenhuma imagem")
+        layout.addWidget(self._property_title("Image"))
+        path = QLabel(Path(source.path).name if source.path else "No image")
         path.setWordWrap(True)
         path.setStyleSheet("color: #c6d0e0; font-size: 11px; background: transparent;")
         layout.addWidget(path)
-        change = QPushButton("Trocar imagem…")
+        change = QPushButton("Change image…")
         change.setObjectName("FlatButton")
         change.clicked.connect(lambda: self._change_image(source))
         layout.addWidget(change)
-        stretch = QCheckBox("Preencher (esticar)")
+        stretch = QCheckBox("Stretch to fill")
         stretch.setChecked(source.stretch)
         stretch.toggled.connect(lambda checked: self._image_stretch_changed(source, checked))
         layout.addWidget(stretch)
@@ -1634,9 +1634,9 @@ class MainWindow(QMainWindow):
     def _change_image(self, source: ImageSource) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Escolher imagem",
+            "Choose image",
             str(Path(source.path).parent) if source.path else "",
-            "Imagens (*.png *.jpg *.jpeg *.webp *.bmp *.gif *.avif);;Todos os arquivos (*.*)",
+            "Images (*.png *.jpg *.jpeg *.webp *.bmp *.gif *.avif);;All files (*.*)",
         )
         if not path:
             return
@@ -1660,11 +1660,11 @@ class MainWindow(QMainWindow):
         combo = self.mic_combo
         combo.blockSignals(True)
         combo.clear()
-        combo.addItem("Sem áudio", None)
-        combo.addItem("Microfone + computador", "@both")
-        combo.addItem("Som do computador", "@system")
+        combo.addItem("No audio", None)
+        combo.addItem("Microphone + computer", "@both")
+        combo.addItem("Computer audio", "@system")
         if self._audio_devices:
-            combo.addItem("Microfone padrão", "@default")
+            combo.addItem("Default microphone", "@default")
             for device in self._audio_devices:
                 combo.addItem(device.description(), device.description())
         target = 0
@@ -1793,7 +1793,7 @@ class MainWindow(QMainWindow):
         visible = [source for source in self._current_sources() if source.visible]
         if not visible:
             QMessageBox.information(
-                self, "Klip", "Adicione pelo menos uma fonte visível antes de gravar."
+                self, "Klip", "Add at least one visible source before recording."
             )
             self.record_btn.setChecked(False)
             return False
@@ -1801,7 +1801,7 @@ class MainWindow(QMainWindow):
         try:
             folder.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
-            QMessageBox.critical(self, "Klip", f"Não foi possível criar a pasta de gravação:\n{exc}")
+            QMessageBox.critical(self, "Klip", f"Could not create the recording folder:\n{exc}")
             self.record_btn.setChecked(False)
             return False
 
@@ -1827,9 +1827,9 @@ class MainWindow(QMainWindow):
             if is_default and microphone_muted():
                 answer = QMessageBox.question(
                     self,
-                    "Microfone mudo",
-                    "O microfone está silenciado no Windows, então o vídeo ficaria sem som.\n\n"
-                    "Ativar o microfone agora?",
+                    "Microphone muted",
+                    "The microphone is muted in Windows, so the video would have no sound.\n\n"
+                    "Unmute the microphone now?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.Yes,
                 )
@@ -1849,7 +1849,7 @@ class MainWindow(QMainWindow):
             )
         except Exception as exc:
             self._start_mic_monitor()
-            QMessageBox.critical(self, "Klip", f"Não foi possível iniciar a gravação:\n{exc}")
+            QMessageBox.critical(self, "Klip", f"Could not start recording:\n{exc}")
             self.record_btn.setChecked(False)
             return False
 
@@ -1863,20 +1863,20 @@ class MainWindow(QMainWindow):
         self._elapsed.start()
         self.preview.set_recording(True)
         self.record_btn.setChecked(True)
-        self.record_btn.setText("Parar gravação")
+        self.record_btn.setText("Stop recording")
         self.record_btn.setIcon(icons.tool_icon("stop", 16, "#ff9a9f"))
-        self.record_btn.setToolTip("Parar gravação (F9)")
+        self.record_btn.setToolTip("Stop recording (F9)")
         self.timer_label.setText("00:00:00")
         self.timer_label.setStyleSheet(f"color: {RED};")
-        self.file_label.setText(f"Gravando · {path.name}")
+        self.file_label.setText(f"Recording · {path.name}")
         self.file_label.setToolTip(str(path))
         self.mic_combo.setEnabled(False)
-        self.setWindowTitle("Klip — ● gravando")
+        self.setWindowTitle("Klip — ● recording")
         interval = max(5, int(round(1000 / max(1, self.config.fps))))
         self._record_timer.start(interval)
         self._ui_timer.start()
         self._record_tick()
-        self._set_status(f"Gravando em {path}", str(path))
+        self._set_status(f"Recording to {path}", str(path))
         return True
 
     def _record_tick(self) -> None:
@@ -1900,7 +1900,7 @@ class MainWindow(QMainWindow):
             return
         elapsed = self._elapsed.elapsed() / 1000.0
         self.timer_label.setText(_format_duration(elapsed))
-        self.setWindowTitle(f"Klip — ● gravando {_format_duration(elapsed)}")
+        self.setWindowTitle(f"Klip — ● recording {_format_duration(elapsed)}")
         size = self.session.current_bytes() if self.session else 0
         self.file_label.setText(
             f"{Path(self.record_path).name} · {size / (1024 * 1024):.1f} MB"
@@ -1910,7 +1910,7 @@ class MainWindow(QMainWindow):
         if not self.is_recording:
             return
         self._record_error = message
-        self._set_status(f"Erro na gravação: {message}")
+        self._set_status(f"Recording error: {message}")
         QTimer.singleShot(0, self.stop_recording)
 
     def stop_recording(self) -> None:
@@ -1931,9 +1931,9 @@ class MainWindow(QMainWindow):
         self.preview.set_recording(False)
         self.preview.refresh()
         self.record_btn.setChecked(False)
-        self.record_btn.setText("Iniciar gravação")
+        self.record_btn.setText("Start recording")
         self.record_btn.setIcon(icons.tool_icon("record", 16, RED))
-        self.record_btn.setToolTip("Iniciar gravação (F9)")
+        self.record_btn.setToolTip("Start recording (F9)")
         self.mic_combo.setEnabled(bool(self._audio_devices))
         self.timer_label.setText("00:00:00")
         self.timer_label.setStyleSheet("")
@@ -1942,15 +1942,15 @@ class MainWindow(QMainWindow):
 
         error = self._record_error or stop_error
         if error:
-            self.file_label.setText("Falha na gravação")
-            self._set_status(f"Falha na gravação: {error}")
-            QMessageBox.critical(self, "Klip", f"A gravação falhou:\n{error}")
+            self.file_label.setText("Recording failed")
+            self._set_status(f"Recording failed: {error}")
+            QMessageBox.critical(self, "Klip", f"Recording failed:\n{error}")
             return
 
-        name = Path(path).name if path else "gravação"
-        self.file_label.setText(f"Salvo · {name}")
+        name = Path(path).name if path else "recording"
+        self.file_label.setText(f"Saved · {name}")
         self.file_label.setToolTip(path)
-        self._set_status(f"Vídeo salvo em {path}", path)
+        self._set_status(f"Video saved to {path}", path)
         if self.config.open_folder_after:
             self.open_output_folder()
 
@@ -1966,7 +1966,7 @@ class MainWindow(QMainWindow):
 
     def open_settings(self) -> None:
         if self.is_recording:
-            self._set_status("Pare a gravação antes de alterar as configurações.")
+            self._set_status("Stop recording before changing settings.")
             return
         dialog = SettingsDialog(self.config, self)
         if not dialog.exec():
@@ -1976,7 +1976,7 @@ class MainWindow(QMainWindow):
         self._sync_header()
         self.preview.refresh()
         self._schedule_save()
-        self._set_status("Configurações de saída atualizadas")
+        self._set_status("Output settings updated")
 
     def open_about(self) -> None:
         AboutDialog(self).exec()

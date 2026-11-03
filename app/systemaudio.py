@@ -178,7 +178,7 @@ class SystemAudioCapture(QObject):
                 ctypes.byref(enumerator),
             )
             if hr < 0:
-                raise OSError("Falha ao abrir o áudio do sistema.")
+                raise OSError("Failed to open system audio.")
             hr = _method(
                 enumerator,
                 4,
@@ -188,7 +188,7 @@ class SystemAudioCapture(QObject):
                 ctypes.POINTER(ctypes.c_void_p),
             )(enumerator, 0, 0, ctypes.byref(device))
             if hr < 0:
-                raise OSError("Nenhuma saída de áudio encontrada.")
+                raise OSError("No audio output found.")
             hr = _method(
                 device,
                 3,
@@ -205,12 +205,12 @@ class SystemAudioCapture(QObject):
                 ctypes.byref(client),
             )
             if hr < 0:
-                raise OSError("Falha ao iniciar a captura do sistema.")
+                raise OSError("Failed to start system capture.")
             hr = _method(
                 client, 8, ctypes.c_long, ctypes.POINTER(ctypes.POINTER(_WAVEFORMATEX))
             )(client, ctypes.byref(mix_format))
             if hr < 0 or not mix_format:
-                raise OSError("Formato de áudio do sistema indisponível.")
+                raise OSError("System audio format unavailable.")
             fmt = mix_format.contents
             rate = int(fmt.nSamplesPerSec)
             channels = int(fmt.nChannels)
@@ -236,7 +236,7 @@ class SystemAudioCapture(QObject):
                 None,
             )
             if hr < 0:
-                raise OSError("Falha ao configurar a captura do sistema.")
+                raise OSError("Failed to configure system capture.")
             hr = _method(
                 client,
                 14,
@@ -249,9 +249,9 @@ class SystemAudioCapture(QObject):
                 ctypes.byref(capture),
             )
             if hr < 0:
-                raise OSError("Falha ao ler o áudio do sistema.")
+                raise OSError("Failed to read system audio.")
             if _method(client, 10, ctypes.c_long)(client) < 0:
-                raise OSError("Falha ao iniciar a captura do sistema.")
+                raise OSError("Failed to start system capture.")
 
             self._format = (rate, channels)
             self._ready_event.set()

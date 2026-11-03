@@ -40,7 +40,7 @@ RESOLUTIONS = [
 class SettingsDialog(QDialog):
     def __init__(self, config: Config, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Configurações de saída")
+        self.setWindowTitle("Output settings")
         self.setModal(True)
         self.setMinimumWidth(470)
         self._config = config
@@ -50,11 +50,11 @@ class SettingsDialog(QDialog):
         layout.setContentsMargins(22, 20, 22, 18)
         layout.setSpacing(14)
 
-        title = QLabel("Configurações de saída")
+        title = QLabel("Output settings")
         title.setStyleSheet("font-size: 16px; font-weight: 600; color: #ffffff;")
         layout.addWidget(title)
         layout.addWidget(
-            muted_label("Formato MP4 (H.264) com áudio AAC do microfone ou do computador.")
+            muted_label("MP4 (H.264) with AAC audio from the microphone or the computer.")
         )
 
         line = QFrame()
@@ -64,7 +64,7 @@ class SettingsDialog(QDialog):
 
         resolution_row = QHBoxLayout()
         resolution_row.setSpacing(10)
-        label = QLabel("Resolução")
+        label = QLabel("Resolution")
         label.setFixedWidth(150)
         self.resolution = QComboBox()
         for text, width, height in RESOLUTIONS:
@@ -81,7 +81,7 @@ class SettingsDialog(QDialog):
 
         fps_row = QHBoxLayout()
         fps_row.setSpacing(10)
-        fps_label = QLabel("Quadros por segundo")
+        fps_label = QLabel("Frames per second")
         fps_label.setFixedWidth(150)
         self.fps = QComboBox()
         for value in (30, 60):
@@ -93,7 +93,7 @@ class SettingsDialog(QDialog):
 
         quality_row = QHBoxLayout()
         quality_row.setSpacing(10)
-        quality_label = QLabel("Qualidade do vídeo")
+        quality_label = QLabel("Video quality")
         quality_label.setFixedWidth(150)
         self.quality = QSlider(Qt.Orientation.Horizontal)
         self.quality.setRange(55, 95)
@@ -109,23 +109,23 @@ class SettingsDialog(QDialog):
 
         folder_row = QHBoxLayout()
         folder_row.setSpacing(10)
-        folder_label = QLabel("Pasta de gravação")
+        folder_label = QLabel("Recording folder")
         folder_label.setFixedWidth(150)
         self.folder = QLineEdit(config.save_dir)
-        browse = QPushButton("Escolher…")
+        browse = QPushButton("Browse…")
         browse.clicked.connect(self._browse)
         folder_row.addWidget(folder_label)
         folder_row.addWidget(self.folder, 1)
         folder_row.addWidget(browse)
         layout.addLayout(folder_row)
 
-        self.open_after = QCheckBox("Abrir a pasta quando a gravação terminar")
+        self.open_after = QCheckBox("Open the folder when recording finishes")
         self.open_after.setChecked(config.open_folder_after)
         layout.addWidget(self.open_after)
 
         note = muted_label(
-            "O MP4 abre em qualquer player e editor. A qualidade controla o bitrate do H.264: "
-            "mais alta gera arquivos maiores, porém com menos artefatos em movimento."
+            "The MP4 plays in any player or editor. Quality controls the H.264 bitrate: "
+            "higher quality produces larger files but fewer artifacts in motion."
         )
         layout.addWidget(note)
 
@@ -133,16 +133,16 @@ class SettingsDialog(QDialog):
             QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save
         )
         save = buttons.button(QDialogButtonBox.StandardButton.Save)
-        save.setText("Salvar")
+        save.setText("Save")
         save.setObjectName("AccentButton")
-        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("Cancelar")
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("Cancel")
         buttons.accepted.connect(self._accept)
         buttons.rejected.connect(self.reject)
         layout.addSpacing(4)
         layout.addWidget(buttons)
 
     def _browse(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Pasta de gravação", self.folder.text())
+        folder = QFileDialog.getExistingDirectory(self, "Recording folder", self.folder.text())
         if folder:
             self.folder.setText(folder)
 
@@ -152,7 +152,7 @@ class SettingsDialog(QDialog):
         try:
             path.mkdir(parents=True, exist_ok=True)
         except OSError as exc:
-            QMessageBox.warning(self, "Klip", f"Não foi possível usar essa pasta:\n{exc}")
+            QMessageBox.warning(self, "Klip", f"Could not use this folder:\n{exc}")
             return
         width, height = self.resolution.currentData()
         self.values = {
@@ -169,7 +169,7 @@ class SettingsDialog(QDialog):
 class WindowPickerDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Escolher janela")
+        self.setWindowTitle("Choose window")
         self.setModal(True)
         self.resize(580, 460)
         self._windows: list[WindowInfo] = []
@@ -179,17 +179,17 @@ class WindowPickerDialog(QDialog):
         layout.setContentsMargins(18, 16, 18, 16)
         layout.setSpacing(10)
 
-        title = QLabel("Escolher janela")
+        title = QLabel("Choose window")
         title.setStyleSheet("font-size: 16px; font-weight: 600; color: #ffffff;")
         layout.addWidget(title)
-        layout.addWidget(muted_label("Selecione a janela que será capturada. Janelas minimizadas aparecem paradas."))
+        layout.addWidget(muted_label("Select the window to capture. Minimized windows appear frozen."))
 
         search_row = QHBoxLayout()
         search_row.setSpacing(8)
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Buscar por título ou programa…")
+        self.search.setPlaceholderText("Search by title or program…")
         self.search.textChanged.connect(self._filter)
-        refresh = QPushButton("Atualizar")
+        refresh = QPushButton("Refresh")
         refresh.setIcon(icons.tool_icon("refresh", 18))
         refresh.clicked.connect(self.reload)
         search_row.addWidget(self.search, 1)
@@ -205,9 +205,9 @@ class WindowPickerDialog(QDialog):
         self.buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Ok
         )
-        self.buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("Cancelar")
+        self.buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("Cancel")
         ok = self.buttons.button(QDialogButtonBox.StandardButton.Ok)
-        ok.setText("Usar janela")
+        ok.setText("Use window")
         ok.setObjectName("AccentButton")
         ok.setEnabled(False)
         self.buttons.accepted.connect(self._accept)
@@ -220,7 +220,7 @@ class WindowPickerDialog(QDialog):
         self.list.clear()
         self._windows = list_windows()
         for window in self._windows:
-            process = window.process or "aplicativo"
+            process = window.process or "application"
             item = QListWidgetItem(icons.kind_pixmap("window", 18), f"{window.title}    ·    {process}")
             item.setData(Qt.ItemDataRole.UserRole, window.hwnd)
             item.setToolTip(f"{window.title}\n{process}\n{window.width} × {window.height}")
@@ -256,7 +256,7 @@ class WindowPickerDialog(QDialog):
 class AboutDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Sobre o Klip")
+        self.setWindowTitle("About Klip")
         self.setModal(True)
         self.setFixedWidth(420)
 
@@ -274,7 +274,7 @@ class AboutDialog(QDialog):
         titles.setSpacing(2)
         name = QLabel("Klip")
         name.setStyleSheet("font-size: 22px; font-weight: 700; color: #ffffff;")
-        version = QLabel(f"Versão {APP_VERSION} · código aberto")
+        version = QLabel(f"Version {APP_VERSION} · open source")
         version.setStyleSheet(f"color: {MUTED}; font-size: 11px;")
         titles.addWidget(name)
         titles.addWidget(version)
@@ -282,8 +282,8 @@ class AboutDialog(QDialog):
         layout.addLayout(top)
 
         description = QLabel(
-            "Estúdio de captura de tela inspirado no OBS Studio: cenas, fontes, "
-            "prévia editável, webcam e gravação com áudio do microfone ou do computador."
+            "Screen capture studio inspired by OBS Studio: scenes, sources, "
+            "editable preview, webcam and recording with microphone or computer audio."
         )
         description.setWordWrap(True)
         description.setStyleSheet("color: #c6d0e0; font-size: 12px;")
@@ -296,15 +296,15 @@ class AboutDialog(QDialog):
 
         tech = QLabel(
             "Python + PySide6 (Qt 6)\n"
-            "Captura de tela e janela via Win32\n"
-            "Gravação MP4/H.264 com áudio AAC, sem ffmpeg externo\n"
-            "Distribuído sob a licença MIT"
+            "Screen and window capture via Win32\n"
+            "MP4/H.264 recording with AAC audio, no external ffmpeg\n"
+            "Distributed under the MIT license"
         )
         tech.setStyleSheet(f"color: {MUTED}; font-size: 11px; line-height: 150%;")
         layout.addWidget(tech)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-        buttons.button(QDialogButtonBox.StandardButton.Close).setText("Fechar")
+        buttons.button(QDialogButtonBox.StandardButton.Close).setText("Close")
         buttons.rejected.connect(self.reject)
         buttons.accepted.connect(self.accept)
         layout.addWidget(buttons)

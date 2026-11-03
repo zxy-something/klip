@@ -19,7 +19,7 @@ from .win32util import (
 
 
 class ScreenPump:
-    """Mantém o quadro mais recente do monitor pronto, fora da thread da interface."""
+    """Keeps the latest monitor frame ready, off the UI thread."""
 
     def __init__(
         self,
@@ -63,7 +63,7 @@ class ScreenPump:
 
 
 class _ScreenWorker(QThread):
-    """Captura a tela com o pipeline do Qt e converte os quadros nesta thread."""
+    """Captures the screen with the Qt pipeline and converts frames on this thread."""
 
     def __init__(self, pump: ScreenPump, screen) -> None:
         super().__init__()
@@ -132,7 +132,7 @@ class _ScreenWorker(QThread):
 
 
 class WindowPump(threading.Thread):
-    """Captura uma janela em segundo plano para a prévia e a gravação não travarem."""
+    """Captures a window in the background so the preview and recording stay smooth."""
 
     def __init__(self, hwnd: int) -> None:
         super().__init__(name=f"window-{hwnd}", daemon=True)

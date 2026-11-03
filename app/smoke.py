@@ -64,7 +64,7 @@ def _inspect_media(
         QMediaPlayer.MediaStatus.InvalidMedia,
     )
     if not loaded:
-        logs.append("FAIL: mídia inválida")
+        logs.append("FAIL: invalid media")
         return False, logs
 
     player.play()
@@ -153,11 +153,11 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         window.setGeometry(90, 90, 1240, 800)
         _pump(app, 0.8)
 
-        check("janela abriu", window.isVisible())
-        check("título Klip", "Klip" in window.windowTitle(), window.windowTitle())
-        check("cena padrão", len(window.scenes) >= 1)
+        check("window opened", window.isVisible())
+        check("Klip title", "Klip" in window.windowTitle(), window.windowTitle())
+        check("default scene", len(window.scenes) >= 1)
         check(
-            "fonte inicial de tela",
+            "initial screen source",
             any(source.kind == "screen" for source in window.current_scene().sources),
             str([source.kind for source in window.current_scene().sources]),
         )
@@ -165,27 +165,27 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         before = len(window.current_scene().sources)
         window.add_text_source()
         _pump(app, 0.4)
-        check("adicionar fonte de texto", len(window.current_scene().sources) == before + 1)
+        check("add text source", len(window.current_scene().sources) == before + 1)
         check(
-            "texto selecionado",
+            "text selected",
             isinstance(window.current_scene().source_by_id(window.selected_source_id), TextSource),
         )
         window.preview.refresh()
         _pump(app, 0.2)
         check(
-            "prévia composta",
+            "composed preview",
             window.preview._frame is not None
             and not window.preview._frame.isNull()
             and window.preview._frame.width() == window.config.output_width,
             f"{window.preview._frame.width()}x{window.preview._frame.height()}"
             if window.preview._frame is not None
-            else "sem quadro",
+            else "no frame",
         )
 
         window_source = WindowSource(
             hwnd=int(window.winId()),
             title=window.windowTitle(),
-            name="Teste de janela",
+            name="Window test",
         )
         window_source.refresh()
         start = time.perf_counter()
@@ -194,14 +194,14 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         window_capture_ms = (time.perf_counter() - start) / 10 * 1000
         captured = window_source._image
         check(
-            "captura de janela",
+            "window capture",
             captured is not None and not captured.isNull() and not _looks_blank(captured),
             f"{captured.width()}x{captured.height()}"
             if captured is not None and not captured.isNull()
-            else "sem imagem",
+            else "no image",
         )
-        note(f"[INFO] captura de janela: {window_capture_ms:.1f} ms/quadro")
-        check("captura de janela rápida", window_capture_ms < 45, f"{window_capture_ms:.1f} ms")
+        note(f"[INFO] window capture: {window_capture_ms:.1f} ms/frame")
+        check("fast window capture", window_capture_ms < 45, f"{window_capture_ms:.1f} ms")
         window_source.dispose()
 
         canvas = QImage(240, 240, QImage.Format_ARGB32)
@@ -217,16 +217,16 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
             if canvas.pixelColor(x, y).rgb() != baseline
         )
         check(
-            "cursor sobreposto",
+            "cursor overlaid",
             cursor_image() is not None and changed > 10,
-            f"{changed} amostras alteradas",
+            f"{changed} changed samples",
         )
         probe = ScreenSource(screen_name="probe")
         probe.capture_cursor = False
         restored = ScreenSource(screen_name="probe")
         restored.apply_data(probe.data_dict())
         check(
-            "cursor persistido",
+            "cursor persisted",
             ScreenSource(screen_name="probe").capture_cursor
             and restored.capture_cursor is False,
         )
@@ -237,9 +237,9 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         screen_source.refresh()
         pump_frames = screen_source._pump.stats() if screen_source._pump is not None else 0
         check(
-            "captura de tela ativa",
+            "screen capture active",
             screen_source._image is not None and pump_frames > 0,
-            f"{pump_frames} quadros",
+            f"{pump_frames} frames",
         )
 
         QCursor.setPos(window.screen().geometry().center())
@@ -263,20 +263,20 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
             if without_cursor.pixel(x, y) != with_cursor.pixel(x, y)
         )
         check(
-            "cursor na captura de tela",
+            "cursor in screen capture",
             screen_changed > 20,
-            f"{screen_changed} pixels alterados",
+            f"{screen_changed} changed pixels",
         )
 
         start = time.perf_counter()
         for _ in range(20):
             window.preview.refresh()
         preview_ms = (time.perf_counter() - start) / 20 * 1000
-        note(f"[INFO] prévia composta: {preview_ms:.1f} ms/quadro")
-        check("prévia fluida", preview_ms < 18, f"{preview_ms:.1f} ms")
+        note(f"[INFO] composed preview: {preview_ms:.1f} ms/frame")
+        check("smooth preview", preview_ms < 18, f"{preview_ms:.1f} ms")
 
         check(
-            "barra de título personalizada",
+            "custom title bar",
             window._title_bar is not None
             and window._title_bar.isVisible()
             and window._title_menu is not None
@@ -284,7 +284,7 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         )
         label_rect = window._physical_rect(window._title_label)
         check(
-            "arrastar pela barra",
+            "drag by title bar",
             window._native_hit_test(
                 label_rect.center().x(), label_rect.center().y()
             )
@@ -292,7 +292,7 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         )
         close_rect = window._physical_rect(window._close_button)
         check(
-            "botões da janela clicáveis",
+            "window buttons clickable",
             window._native_hit_test(
                 close_rect.center().x(), close_rect.center().y()
             )
@@ -303,13 +303,13 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         available = window.screen().availableGeometry()
         frame = window.frameGeometry()
         check(
-            "maximizar respeita a barra de tarefas",
+            "maximize respects taskbar",
             frame.width() <= available.width() + 2
             and frame.height() <= available.height() + 2,
             f"{frame.width()}x{frame.height()} vs {available.width()}x{available.height()}",
         )
         check(
-            "barra de título permanece ao maximizar",
+            "title bar stays when maximized",
             window.isMaximized()
             and window._title_bar.isVisible()
             and not window._fullscreen,
@@ -344,64 +344,64 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         window._refresh_all()
         _pump(app, 0.3)
 
-        note(f"[STEP] modo de áudio: {mode}")
+        note(f"[STEP] audio mode: {mode}")
         started = window.start_recording()
         note(f"[STEP] start_recording={started}")
         _pump(app, 2.6)
-        note("[STEP] 2.6s de gravação")
+        note("[STEP] 2.6s of recording")
         session = window.session
         if session is not None:
             recorder = session._recorder
             note(
-                "[INFO] gravador: "
-                f"modo={mode} local={recorder.actualLocation().toString()} "
-                f"estado={recorder.recorderState()} erro={recorder.error()} "
-                f"texto={recorder.errorString()} falhou={session._failed} "
+                "[INFO] recorder: "
+                f"mode={mode} location={recorder.actualLocation().toString()} "
+                f"state={recorder.recorderState()} error={recorder.error()} "
+                f"text={recorder.errorString()} failed={session._failed} "
                 f"mix={session._mix} spec={session.audio_spec} "
                 f"audio_input={session._audio_input is not None} "
-                f"falha_ui={window._record_error}"
+                f"ui_error={window._record_error}"
             )
-        note("[STEP] parando gravação")
+        note("[STEP] stopping recording")
         window.stop_recording()
-        note("[STEP] gravação parada")
+        note("[STEP] recording stopped")
         _pump(app, 0.6)
         recording = Path(window.record_path) if window.record_path else None
         note(
-            "[INFO] gravação final: "
+            "[INFO] final recording: "
             f"bytes={recording.stat().st_size if recording and recording.exists() else 0} "
             f"frames={session.frames_written if session is not None else -1} "
-            f"fila={len(session._audio_queue) if session is not None else -1}"
+            f"queue={len(session._audio_queue) if session is not None else -1}"
         )
-        check("iniciar gravação", bool(started))
+        check("start recording", bool(started))
         check(
-            "arquivo criado",
+            "file created",
             recording is not None and recording.exists() and recording.stat().st_size > 20_000,
             f"{recording.stat().st_size if recording and recording.exists() else 0} bytes",
         )
         if recording is not None and recording.exists():
             data = recording.read_bytes()
             check(
-                "contêiner MP4/H.264",
+                "MP4/H.264 container",
                 b"ftyp" in data[:64] and b"avc1" in data,
                 f"{len(data)} bytes",
             )
-            check("extensão mp4", recording.suffix.lower() == ".mp4", recording.suffix)
+            check("mp4 extension", recording.suffix.lower() == ".mp4", recording.suffix)
             ok, media_logs = _inspect_media(app, recording, expect_audio=has_mic)
             lines.extend(media_logs)
-            check("MP4 de tela reproduzível", ok)
+            check("screen MP4 playable", ok)
             flush()
 
         from .systemaudio import SystemAudioCapture
 
-        note("[STEP] testando captura de sistema isolada")
+        note("[STEP] testing isolated system capture")
         system_capture = SystemAudioCapture()
         system_ok = system_capture.start()
         system_format = system_capture.audio_format
         system_error = system_capture.error
         system_capture.stop()
-        note(f"[STEP] captura de sistema: {system_ok} {system_format} {system_error}")
+        note(f"[STEP] system capture: {system_ok} {system_format} {system_error}")
         check(
-            "áudio do computador disponível",
+            "computer audio available",
             system_ok,
             system_error or str(system_format),
         )
@@ -409,7 +409,7 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
         reference = out_dir / "klip_reference.mp4"
         _make_reference_mp4(app, reference)
         check(
-            "MP4 sintético criado",
+            "synthetic MP4 created",
             reference.exists() and reference.stat().st_size > 1_000,
             f"{reference.stat().st_size} bytes",
         )
@@ -417,15 +417,15 @@ def run_smoke(app: QApplication, window, out_dir: Path) -> int:
             app, reference, expect_audio=False, expect_orientation=True
         )
         lines.extend(media_logs)
-        check("MP4 com orientação correta", ok)
+        check("MP4 with correct orientation", ok)
 
         window.close()
         _pump(app, 0.2)
     except Exception:
         failures += 1
-        lines.append("[FAIL] exceção durante o smoketest")
+        lines.append("[FAIL] exception during smoke test")
         lines.append(traceback.format_exc())
 
-    lines.append("RESULTADO: " + ("OK" if failures == 0 else f"{failures} falha(s)"))
+    lines.append("RESULT: " + ("OK" if failures == 0 else f"{failures} failure(s)"))
     flush()
     return 0 if failures == 0 else 1

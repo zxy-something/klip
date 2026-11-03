@@ -92,7 +92,7 @@ def draw_mouse_cursor(
 
 class Source:
     kind = "source"
-    default_name = "Fonte"
+    default_name = "Source"
 
     def __init__(
         self,
@@ -165,7 +165,7 @@ class Source:
 
 class ScreenSource(Source):
     kind = "screen"
-    default_name = "Tela inteira"
+    default_name = "Full screen"
 
     def __init__(self, *args, screen_name: str = "", **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -231,7 +231,7 @@ class ScreenSource(Source):
     def status_text(self) -> str:
         screen = self._screen()
         if screen is None:
-            return "Nenhum monitor detectado"
+            return "No monitor detected"
         if self._rect is not None:
             _left, _top, width, height = self._rect
             return f"{screen.name()} · {width}×{height}"
@@ -257,12 +257,12 @@ class ScreenSource(Source):
                                 rect.width() / max(1, self._image.width()),
                             )
         else:
-            draw_placeholder(painter, rect, "Tela indisponível")
+            draw_placeholder(painter, rect, "Screen unavailable")
 
 
 class WindowSource(Source):
     kind = "window"
-    default_name = "Janela"
+    default_name = "Window"
 
     def __init__(
         self,
@@ -362,7 +362,7 @@ class WindowSource(Source):
         if self.process:
             pieces.append(self.process)
         if self._missing:
-            pieces.append("janela não encontrada")
+            pieces.append("window not found")
         return " · ".join(pieces)
 
     def render(self, painter: QPainter, rect: QRectF, canvas: QSize) -> None:
@@ -384,7 +384,7 @@ class WindowSource(Source):
                                 rect.width() / max(1, self._image.width()),
                             )
         else:
-            draw_placeholder(painter, rect, "Janela indisponível")
+            draw_placeholder(painter, rect, "Window unavailable")
 
 
 class CameraSource(Source):
@@ -472,20 +472,20 @@ class CameraSource(Source):
 
     def status_text(self) -> str:
         state = {
-            "live": "ao vivo",
-            "starting": "iniciando…",
-            "missing": "nenhuma câmera encontrada",
-            "error": "erro ao acessar a câmera",
-            "idle": "parada",
+            "live": "live",
+            "starting": "starting…",
+            "missing": "no camera found",
+            "error": "camera access error",
+            "idle": "stopped",
         }.get(self._state, self._state)
-        return f"{self.device_name or 'câmera padrão'} · {state}"
+        return f"{self.device_name or 'default camera'} · {state}"
 
     def render(self, painter: QPainter, rect: QRectF, canvas: QSize) -> None:
         if self._image is None or self._image.isNull():
             text = {
-                "starting": "Iniciando câmera…",
-                "missing": "Webcam indisponível",
-                "error": "Erro na webcam",
+                "starting": "Starting camera…",
+                "missing": "Webcam unavailable",
+                "error": "Webcam error",
             }.get(self._state, "Webcam")
             draw_placeholder(painter, rect, text)
             return
@@ -529,7 +529,7 @@ class CameraSource(Source):
 
 class ImageSource(Source):
     kind = "image"
-    default_name = "Imagem"
+    default_name = "Image"
 
     def __init__(self, *args, path: str = "", stretch: bool = False, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -560,11 +560,11 @@ class ImageSource(Source):
         self._missing = self._pixmap is None
 
     def status_text(self) -> str:
-        return os.path.basename(self.path) if self.path else "nenhuma imagem"
+        return os.path.basename(self.path) if self.path else "no image"
 
     def render(self, painter: QPainter, rect: QRectF, canvas: QSize) -> None:
         if self._pixmap is None or self._pixmap.isNull():
-            draw_placeholder(painter, rect, "Imagem não encontrada")
+            draw_placeholder(painter, rect, "Image not found")
             return
         if self.stretch:
             painter.drawPixmap(rect, self._pixmap, QRectF(self._pixmap.rect()))
@@ -583,12 +583,12 @@ class ImageSource(Source):
 
 class TextSource(Source):
     kind = "text"
-    default_name = "Texto"
+    default_name = "Text"
 
     def __init__(
         self,
         *args,
-        text: str = "Seu texto aqui",
+        text: str = "Your text here",
         size: float = 0.075,
         color: str = "#ffffff",
         bold: bool = True,
@@ -627,11 +627,11 @@ class TextSource(Source):
         self.background = bool(data.get("background", False))
 
     def status_text(self) -> str:
-        return f"{len(self.text)} caracteres"
+        return f"{len(self.text)} characters"
 
     def render(self, painter: QPainter, rect: QRectF, canvas: QSize) -> None:
         if not self.text.strip():
-            draw_placeholder(painter, rect, "Texto vazio")
+            draw_placeholder(painter, rect, "Empty text")
             return
         pixel_size = max(8, int(canvas.height() * self.size))
         font = QFont("Segoe UI")
@@ -704,9 +704,9 @@ def source_from_dict(data: dict) -> Source | None:
 
 
 class Scene:
-    def __init__(self, name: str = "Cena", sources: list[Source] | None = None, sid: str | None = None) -> None:
+    def __init__(self, name: str = "Scene", sources: list[Source] | None = None, sid: str | None = None) -> None:
         self.id = sid or uuid.uuid4().hex[:10]
-        self.name = name or "Cena"
+        self.name = name or "Scene"
         self.sources = list(sources or [])
 
     def to_dict(self) -> dict:
@@ -725,7 +725,7 @@ class Scene:
                 if source is not None:
                     sources.append(source)
         return cls(
-            name=str(data.get("name", "Cena")),
+            name=str(data.get("name", "Scene")),
             sources=sources,
             sid=str(data.get("id") or "") or None,
         )

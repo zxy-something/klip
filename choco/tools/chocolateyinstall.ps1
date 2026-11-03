@@ -6,8 +6,8 @@ $exePath = Join-Path $toolsDir 'Klip.exe'
 Get-ChocolateyWebFile `
   -PackageName $env:ChocolateyPackageName `
   -FileFullPath $exePath `
-  -Url64bit 'https://github.com/zxy-something/klip/releases/download/v1.0.0/Klip.exe' `
-  -Checksum64 'b79e2c9ad12c61e7cc4b8ec51b913bef23d687af88d31f6e767a79ca11d531a6' `
+  -Url64bit 'https://github.com/zxy-something/klip/releases/download/v1.1.0/Klip.exe' `
+  -Checksum64 '7a0b45ba07d1c3bb20a95a8d5ccfe2e287c25076af9e4d3b587f4e26050c45f4' `
   -ChecksumType64 'sha256'
 
 $shortcutPath = Join-Path ([Environment]::GetFolderPath('CommonPrograms')) 'Klip.lnk'

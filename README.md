@@ -1,16 +1,16 @@
 # Klip
 
-Gravador de tela para Windows inspirado no OBS: monte cenas com fontes de vídeo e grave em MP4.
+Screen recorder for Windows inspired by OBS: compose scenes with video sources and record to MP4.
 
-## Recursos
+## Features
 
-- Fontes de tela, janela, câmera, imagem e texto
-- Cenas com posicionamento e dimensionamento das fontes
-- Microfone e áudio do sistema, com medidor de nível e mute
-- Gravação em MP4, com resolução, FPS e qualidade configuráveis
-- Atalho **F9** para iniciar/parar a gravação
+- Screen, window, camera, image and text sources
+- Scenes with source positioning and resizing
+- Microphone and system audio, with level meter and mute
+- MP4 recording with configurable resolution, frame rate and quality
+- **F9** shortcut to start/stop recording
 
-## Instalação
+## Installation
 
 ### Chocolatey
 
@@ -18,21 +18,21 @@ Gravador de tela para Windows inspirado no OBS: monte cenas com fontes de vídeo
 choco install klip
 ```
 
-### Portátil
+### Portable
 
-Baixe `Klip.exe` em [Releases](https://github.com/zxy-something/klip/releases) e execute. Não precisa instalar.
+Download `Klip.exe` from [Releases](https://github.com/zxy-something/klip/releases) and run it. No installation required.
 
-Requisitos: Windows 10/11 (64 bits).
+Requires Windows 10/11 (64-bit).
 
-## Compilar do código
+## Build from source
 
 ```powershell
 python -m pip install -r requirements.txt pyinstaller
 build.bat
 ```
 
-O executável é gerado em `dist\Klip.exe`.
+The executable is generated at `dist\Klip.exe`.
 
-## Licença
+## License
 
 [MIT](LICENSE)

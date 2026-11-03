@@ -47,12 +47,12 @@ class EyeButton(QToolButton):
         self.setFixedSize(22, 22)
         self.setIconSize(QSize(16, 16))
         self.set_visible(visible)
-        self.setToolTip("Ocultar fonte" if visible else "Mostrar fonte")
+        self.setToolTip("Hide source" if visible else "Show source")
 
     def set_visible(self, visible: bool) -> None:
         self._visible = visible
         self.setIcon(icons.eye_pixmap(visible, 16))
-        self.setToolTip("Ocultar fonte" if visible else "Mostrar fonte")
+        self.setToolTip("Hide source" if visible else "Show source")
 
 
 class SourceRow(QWidget):
@@ -173,7 +173,7 @@ class SourceList(QWidget):
         self._rows.clear()
 
         if not sources:
-            hint = QLabel("Nenhuma fonte\nClique em + para adicionar tela, janela, webcam, imagem ou texto.")
+            hint = QLabel("No sources\nClick + to add a screen, window, webcam, image or text.")
             hint.setStyleSheet(f"color: {MUTED}; font-size: 11px; background: transparent;")
             hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
             hint.setContentsMargins(10, 22, 10, 22)
@@ -208,7 +208,7 @@ class SceneRow(QWidget):
         self._hover = False
         self.setFixedHeight(30)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setToolTip(f"{name} · {count} fonte{'s' if count != 1 else ''}")
+        self.setToolTip(f"{name} · {count} source{'s' if count != 1 else ''}")
 
         from PySide6.QtWidgets import QHBoxLayout
 
@@ -471,7 +471,7 @@ class PreviewWidget(QWidget):
             painter.drawImage(canvas, self._frame, QRectF(self._frame.rect()))
         else:
             painter.setPen(QColor("#777777"))
-            painter.drawText(canvas, Qt.AlignmentFlag.AlignCenter, "Prévia indisponível")
+            painter.drawText(canvas, Qt.AlignmentFlag.AlignCenter, "Preview unavailable")
 
         sources = self._source_provider()
         if not any(source.visible for source in sources):
@@ -483,7 +483,7 @@ class PreviewWidget(QWidget):
             painter.drawText(
                 canvas.adjusted(0, -18, 0, -18),
                 Qt.AlignmentFlag.AlignCenter,
-                "Adicione uma fonte para começar",
+                "Add a source to get started",
             )
             small = QFont("Segoe UI", 1)
             small.setPixelSize(11)
@@ -492,7 +492,7 @@ class PreviewWidget(QWidget):
             painter.drawText(
                 canvas.adjusted(0, 18, 0, 18),
                 Qt.AlignmentFlag.AlignCenter,
-                "Tela, janela, webcam, imagem ou texto",
+                "Screen, window, webcam, image or text",
             )
 
         selected = self._selected_source()

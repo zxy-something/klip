@@ -29,9 +29,9 @@ def _high_res_timer(enabled: bool) -> None:
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(prog=APP_NAME, description="Gravador de tela estilo OBS.")
-    parser.add_argument("--smoke-test", action="store_true", help="Executa o teste automático e sai.")
-    parser.add_argument("--smoke-dir", default="", help="Pasta de saída do teste automático.")
+    parser = argparse.ArgumentParser(prog=APP_NAME, description="OBS-style screen recorder.")
+    parser.add_argument("--smoke-test", action="store_true", help="Run the automated test and exit.")
+    parser.add_argument("--smoke-dir", default="", help="Output folder for the automated test.")
     return parser.parse_args(argv)
 
 

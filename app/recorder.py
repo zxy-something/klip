@@ -223,7 +223,7 @@ class RecordingSession(QObject):
         if self._failed:
             return
         self._failed = True
-        self.error.emit(message or "Falha ao codificar o vídeo.")
+        self.error.emit(message or "Failed to encode the video.")
 
     def _read_audio(self) -> None:
         io = self._audio_io
@@ -397,9 +397,9 @@ class RecordingSession(QObject):
         stopped = self._wait_stopped(20.0)
         self._cleanup()
         if self._failed:
-            raise RuntimeError("Não foi possível finalizar o vídeo MP4.")
+            raise RuntimeError("Could not finalize the MP4 video.")
         if not stopped:
-            raise RuntimeError("A gravação demorou demais para finalizar o arquivo.")
+            raise RuntimeError("Recording took too long to finalize the file.")
         if not Path(self.path).exists() or Path(self.path).stat().st_size < 1024:
-            raise RuntimeError("O arquivo MP4 não foi criado.")
+            raise RuntimeError("The MP4 file was not created.")
         return self.path
