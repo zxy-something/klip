@@ -1,6 +1,11 @@
 # Klip
 
+![Status: beta](https://img.shields.io/badge/status-beta-4a4a4a?style=flat-square)
+
 Screen recorder for Windows inspired by OBS: compose scenes with video sources and record to MP4.
+
+> **Klip is in beta.** Core recording works, but expect rough edges and changes between
+> releases. Back up anything important you record and report bugs on GitHub.
 
 ## Features
 
@@ -25,6 +30,15 @@ build.bat
 ```
 
 The executable is generated at `dist\Klip.exe`.
+
+## Beta notes
+
+- Windows 10/11 64-bit are supported, but most testing happens on Windows 11.
+- Some window capture methods depend on the graphics driver. If a source stays black,
+  switch its capture method.
+- Scene and settings formats may change between beta releases.
+
+Found a bug or have a suggestion? [Open an issue](https://github.com/zxy-something/klip/issues).
 
 ## License
 
