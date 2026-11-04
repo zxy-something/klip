@@ -5,8 +5,7 @@
 Screen recorder for Windows inspired by OBS: compose scenes with video sources and record to MP4.
 
 <p align="center">
-  <img src="docs/panel-dark.png" width="360" alt="Caffeinate panel (dark)">
-  <img src="docs/panel-light.png" width="360" alt="Caffeinate panel (light)">
+  <img src="docs/panel-dark.png" width="360" alt="klip panel (dark)">
 </p>
 
 
